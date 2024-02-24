@@ -10,11 +10,16 @@ interface TaskListProps {
 export default function TaskList(props: TaskListProps) {
   return (
     <div>
-      {props.tasks.map((task) => (
+      {props.tasks.map((task, index) => (
         <Task
-          taskText={task.taskText}
+          taskData={task}
           key={task.taskId}
           isSelected={props.selectedTaskId === task.taskId}
+          isLastCompletedTask={
+            task.isCompleted &&
+            index < props.tasks.length - 1 &&
+            !props.tasks[index + 1].isCompleted
+          }
         />
       ))}
     </div>

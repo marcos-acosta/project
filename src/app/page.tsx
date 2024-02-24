@@ -10,37 +10,60 @@ import { mod } from "@/util";
 
 const INITIAL_TASKS: TaskData[] = [
   {
-    taskText: "pet doggo",
-    taskId: "abc",
-    orderScore: 3,
+    taskText: "argue with pigeons",
+    taskId: "klm",
+    orderScore: 11,
+    isCompleted: false,
   },
   {
     taskText: "water doug",
     taskId: "def",
     orderScore: 5,
+    isCompleted: true,
+  },
+  {
+    taskText: "watch paint dry",
+    taskId: "nop",
+    orderScore: 4,
+    isCompleted: true,
   },
   {
     taskText: "catch up with schwartz-san",
     taskId: "ghi",
     orderScore: 7,
+    isCompleted: false,
   },
   {
-    taskText: "argue with pigeons",
-    taskId: "klm",
-    orderScore: 11,
+    taskText: "pet doggo",
+    taskId: "abc",
+    orderScore: 3,
+    isCompleted: false,
   },
 ];
 
 const TASK_HEIGHT_IN_VH = 6;
+const DIVIDER_HEIGHT_IN_VH = 4;
+
+enum JumpDirection {
+  TOP,
+  BOTTOM,
+}
 
 export default function Home() {
-  const [selectedId, setSelectedId] = useState("klm");
-  const tasks = INITIAL_TASKS.sort((a, b) => a.orderScore - b.orderScore);
+  const [selectedId, setSelectedId] = useState("abc");
+  const sortedTasks = INITIAL_TASKS.sort((a, b) => a.orderScore - b.orderScore);
+  const uncompletedTasks = sortedTasks.filter((task) => !task.isCompleted);
+  const completedTasks = sortedTasks.filter((task) => task.isCompleted);
+  const tasks = [...completedTasks, ...uncompletedTasks];
 
   const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
   const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
+  const dividerPresent = completedTasks.length > 0;
   const scrollAmount = selectedTask
-    ? tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH
+    ? -(
+        tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH +
+        (dividerPresent && !selectedTask.isCompleted ? DIVIDER_HEIGHT_IN_VH : 0)
+      )
     : 0;
 
   const navigateTasks = (direction: number) => {
@@ -50,8 +73,17 @@ export default function Home() {
     setSelectedId(tasks[mod(selectedIndex + direction, tasks.length)].taskId);
   };
 
-  const jumpToTop = () => setSelectedId(tasks[0].taskId);
-  const jumpToBottom = () => setSelectedId(tasks[tasks.length - 1].taskId);
+  const jumpTo = (direction: JumpDirection) => {
+    if (!selectedTask) {
+      return;
+    }
+    const taskListOfInterest = selectedTask.isCompleted
+      ? completedTasks
+      : uncompletedTasks;
+    const index =
+      direction === JumpDirection.TOP ? 0 : taskListOfInterest.length - 1;
+    setSelectedId(taskListOfInterest[index].taskId);
+  };
 
   const keyboardHooks: KeyboardHook[] = [
     {
@@ -64,11 +96,11 @@ export default function Home() {
     },
     {
       keyboardEvent: { key: "B" },
-      callback: jumpToBottom,
+      callback: () => jumpTo(JumpDirection.BOTTOM),
     },
     {
       keyboardEvent: { key: "T" },
-      callback: jumpToTop,
+      callback: () => jumpTo(JumpDirection.TOP),
     },
   ];
 
@@ -76,8 +108,8 @@ export default function Home() {
 
   return (
     <div className={styles.taskContainer}>
-      <VerticallyCenteredList scrollAmount={`${-scrollAmount}vh`}>
-        <TaskList tasks={INITIAL_TASKS} selectedTaskId={selectedId} />
+      <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
+        <TaskList tasks={tasks} selectedTaskId={selectedId} />
       </VerticallyCenteredList>
     </div>
   );

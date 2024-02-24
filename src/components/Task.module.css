@@ -16,3 +16,12 @@
 .task.selected {
   background-color: #fff2ccff;
 }
+
+.completed {
+  color: #999999;
+  text-decoration: line-through;
+}
+
+.extraBottomMargin {
+  margin-bottom: 4vh;
+}
