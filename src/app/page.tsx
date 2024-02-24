@@ -34,6 +34,12 @@ const INITIAL_TASKS: TaskData[] = [
     isCompleted: false,
   },
   {
+    taskText: "perfectly toast bread",
+    taskId: "qrs",
+    orderScore: 12,
+    isCompleted: true,
+  },
+  {
     taskText: "pet doggo",
     taskId: "abc",
     orderScore: 3,
@@ -42,7 +48,7 @@ const INITIAL_TASKS: TaskData[] = [
 ];
 
 const TASK_HEIGHT_IN_VH = 6;
-const DIVIDER_HEIGHT_IN_VH = 4;
+const DIVIDER_HEIGHT_IN_VH = 3;
 
 enum JumpDirection {
   TOP,
