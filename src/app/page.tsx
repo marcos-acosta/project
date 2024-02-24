@@ -82,6 +82,21 @@ export default function Home() {
     );
   };
 
+  const navigateAfterToggleCompletion = () => {
+    if (!selectedTask) {
+      return;
+    }
+    if (!selectedTask.isCompleted) {
+      if (selectedId === uncompletedTasks[0].taskId) {
+        if (uncompletedTasks.length > 1) {
+          navigateTasks(1);
+        }
+      } else {
+        navigateTasks(-1);
+      }
+    }
+  };
+
   const jumpTo = (direction: JumpDirection) => {
     if (!selectedTask) {
       return;
@@ -102,7 +117,7 @@ export default function Home() {
           : task
       )
     );
-    navigateTasks(-1);
+    navigateAfterToggleCompletion();
   };
 
   const keyboardHooks: KeyboardHook[] = [
