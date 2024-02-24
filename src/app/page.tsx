@@ -1,95 +1,84 @@
-import Image from "next/image";
+"use client";
+
 import styles from "./page.module.css";
+import { TaskData } from "@/interfaces/Task";
+import VerticallyCenteredList from "@/components/VerticallyCenteredList";
+import TaskList from "@/components/TaskList";
+import { useState } from "react";
+import useKeyboardControl, { KeyboardHook } from "react-keyboard-control";
+import { mod } from "@/util";
+
+const INITIAL_TASKS: TaskData[] = [
+  {
+    taskText: "pet doggo",
+    taskId: "abc",
+    orderScore: 3,
+  },
+  {
+    taskText: "water doug",
+    taskId: "def",
+    orderScore: 5,
+  },
+  {
+    taskText: "catch up with schwartz-san",
+    taskId: "ghi",
+    orderScore: 7,
+  },
+  {
+    taskText: "argue with pigeons",
+    taskId: "klm",
+    orderScore: 11,
+  },
+];
+
+const TASK_HEIGHT_IN_VH = 6;
 
 export default function Home() {
+  const [selectedId, setSelectedId] = useState("klm");
+  const tasks = INITIAL_TASKS.sort((a, b) => a.orderScore - b.orderScore);
+
+  const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
+  const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
+  const scrollAmount = selectedTask
+    ? tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH
+    : 0;
+
+  const navigateTasks = (direction: number) => {
+    if (selectedIndex === null) {
+      return;
+    }
+    setSelectedId(tasks[mod(selectedIndex + direction, tasks.length)].taskId);
+  };
+
+  const jumpToTop = () => setSelectedId(tasks[0].taskId);
+  const jumpToBottom = () => setSelectedId(tasks[tasks.length - 1].taskId);
+
+  const keyboardHooks: KeyboardHook[] = [
+    {
+      keyboardEvent: { key: "k" },
+      callback: () => navigateTasks(-1),
+    },
+    {
+      keyboardEvent: { key: "j" },
+      callback: () => navigateTasks(1),
+    },
+    {
+      keyboardEvent: { key: "B" },
+      callback: jumpToBottom,
+    },
+    {
+      keyboardEvent: { key: "T" },
+      callback: jumpToTop,
+    },
+  ];
+
+  useKeyboardControl(keyboardHooks);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <div className={styles.taskContainer}>
+      <VerticallyCenteredList scrollAmount={`${-scrollAmount}vh`}>
+        <TaskList tasks={INITIAL_TASKS} selectedTaskId={selectedId} />
+      </VerticallyCenteredList>
+    </div>
   );
 }
