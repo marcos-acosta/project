@@ -6,7 +6,7 @@ import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/TaskList";
 import { useState } from "react";
 import useKeyboardControl, { KeyboardHook } from "react-keyboard-control";
-import { mod } from "@/util";
+import { clip, mod } from "@/util";
 
 const INITIAL_TASKS: TaskData[] = [
   {
@@ -57,7 +57,8 @@ enum JumpDirection {
 
 export default function Home() {
   const [selectedId, setSelectedId] = useState("abc");
-  const sortedTasks = INITIAL_TASKS.sort((a, b) => a.orderScore - b.orderScore);
+  const [unsortedTasks, setUnsortedTasks] = useState(INITIAL_TASKS);
+  const sortedTasks = unsortedTasks.sort((a, b) => a.orderScore - b.orderScore);
   const uncompletedTasks = sortedTasks.filter((task) => !task.isCompleted);
   const completedTasks = sortedTasks.filter((task) => task.isCompleted);
   const tasks = [...completedTasks, ...uncompletedTasks];
@@ -76,7 +77,9 @@ export default function Home() {
     if (selectedIndex === null) {
       return;
     }
-    setSelectedId(tasks[mod(selectedIndex + direction, tasks.length)].taskId);
+    setSelectedId(
+      tasks[clip(selectedIndex + direction, 0, tasks.length - 1)].taskId
+    );
   };
 
   const jumpTo = (direction: JumpDirection) => {
@@ -89,6 +92,17 @@ export default function Home() {
     const index =
       direction === JumpDirection.TOP ? 0 : taskListOfInterest.length - 1;
     setSelectedId(taskListOfInterest[index].taskId);
+  };
+
+  const completeTask = () => {
+    setUnsortedTasks(
+      unsortedTasks.map((task) =>
+        task.taskId === selectedId
+          ? { ...task, isCompleted: !task.isCompleted }
+          : task
+      )
+    );
+    navigateTasks(-1);
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -107,6 +121,10 @@ export default function Home() {
     {
       keyboardEvent: { key: "T" },
       callback: () => jumpTo(JumpDirection.TOP),
+    },
+    {
+      keyboardEvent: { key: "Enter", metaKey: true },
+      callback: completeTask,
     },
   ];
 
