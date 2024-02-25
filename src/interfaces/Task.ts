@@ -1,6 +1,10 @@
+export type EpochMillis = number;
+
 export interface TaskData {
   taskText: string;
   taskId: string;
-  orderScore: number;
   isCompleted: boolean;
+  creationTime: EpochMillis;
+  sortingTime: EpochMillis;
+  completionTime: EpochMillis | null;
 }
