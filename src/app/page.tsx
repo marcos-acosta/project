@@ -80,6 +80,8 @@ const sortCompletedTasks = (a: TaskData, b: TaskData) =>
 export default function Home() {
   const [selectedId, setSelectedId] = useState("abc");
   const [unsortedTasks, setUnsortedTasks] = useState(INITIAL_TASKS);
+  const [currentText, setCurrentText] = useState("");
+  const [inEditMode, setInEditMode] = useState(false);
   const uncompletedTasks = unsortedTasks
     .filter((task) => !task.isCompleted)
     .sort(sortUncompletedTasks);
@@ -188,6 +190,27 @@ export default function Home() {
     navigateAfterToggleCompletion();
   };
 
+  const beginEditing = () => {
+    if (!selectedTask) {
+      return;
+    }
+    setInEditMode(true);
+    setCurrentText(selectedTask.taskText);
+  };
+
+  const finishEditing = () => {
+    if (!selectedTask) {
+      return;
+    }
+    setUnsortedTasks(
+      unsortedTasks.map((task) =>
+        task.taskId === selectedId ? { ...task, taskText: currentText } : task
+      )
+    );
+    setInEditMode(false);
+    setCurrentText("");
+  };
+
   const keyboardHooks: KeyboardHook[] = [
     {
       keyboardEvent: { key: "k" },
@@ -227,6 +250,17 @@ export default function Home() {
       callback: () => swapTask(Direction.UP),
       allowWhen: Boolean(!selectedTask?.isCompleted),
     },
+    {
+      keyboardEvent: { key: "Enter" },
+      callback: beginEditing,
+      allowWhen: !inEditMode,
+    },
+    {
+      keyboardEvent: { key: "Enter" },
+      callback: finishEditing,
+      allowWhen: inEditMode && currentText.length > 0,
+      allowOnTextInput: true,
+    },
   ];
 
   useKeyboardControl(keyboardHooks);
@@ -234,7 +268,13 @@ export default function Home() {
   return (
     <div className={styles.taskContainer}>
       <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
-        <TaskList tasks={tasks} selectedTaskId={selectedId} />
+        <TaskList
+          tasks={tasks}
+          selectedTaskId={selectedId}
+          inEditMode={inEditMode}
+          currentText={currentText}
+          setCurrentText={setCurrentText}
+        />
       </VerticallyCenteredList>
     </div>
   );

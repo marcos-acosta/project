@@ -25,3 +25,7 @@
 .extraBottomMargin {
   margin-bottom: 4vh;
 }
+
+.task.selected.beingEdited {
+  background-color: #ffe599ff;
+}
