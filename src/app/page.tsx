@@ -122,16 +122,22 @@ export default function Home() {
     }
   };
 
-  const jumpTo = (direction: Direction) => {
+  const jumpTo = (direction: Direction, absolute: boolean) => {
     if (!selectedTask) {
       return;
     }
-    const taskListOfInterest = selectedTask.isCompleted
-      ? completedTasks
-      : uncompletedTasks;
-    const index =
-      direction === Direction.UP ? 0 : taskListOfInterest.length - 1;
-    setSelectedId(taskListOfInterest[index].taskId);
+    if (absolute) {
+      setSelectedId(
+        tasks[direction === Direction.UP ? 0 : tasks.length - 1].taskId
+      );
+    } else {
+      const taskListOfInterest = selectedTask.isCompleted
+        ? completedTasks
+        : uncompletedTasks;
+      const index =
+        direction === Direction.UP ? 0 : taskListOfInterest.length - 1;
+      setSelectedId(taskListOfInterest[index].taskId);
+    }
   };
 
   const swapTask = (swapDirection: Direction) => {
@@ -172,6 +178,9 @@ export default function Home() {
               completionTime: task.isCompleted
                 ? task.completionTime
                 : Date.now(),
+              sortingTime: task.isCompleted
+                ? uncompletedTasks[0].sortingTime + 1
+                : task.sortingTime,
             }
           : task
       )
@@ -189,12 +198,20 @@ export default function Home() {
       callback: () => navigateTasks(1),
     },
     {
+      keyboardEvent: { key: "b" },
+      callback: () => jumpTo(Direction.DOWN, false),
+    },
+    {
+      keyboardEvent: { key: "t" },
+      callback: () => jumpTo(Direction.UP, false),
+    },
+    {
       keyboardEvent: { key: "B" },
-      callback: () => jumpTo(Direction.DOWN),
+      callback: () => jumpTo(Direction.DOWN, true),
     },
     {
       keyboardEvent: { key: "T" },
-      callback: () => jumpTo(Direction.UP),
+      callback: () => jumpTo(Direction.UP, true),
     },
     {
       keyboardEvent: { key: "Enter", metaKey: true },
