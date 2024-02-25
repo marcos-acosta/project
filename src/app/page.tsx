@@ -319,12 +319,12 @@ export default function Home() {
     {
       keyboardEvent: { key: "J" },
       callback: () => swapTask(Direction.DOWN),
-      allowWhen: Boolean(!selectedTask?.isCompleted),
+      allowWhen: selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: { key: "K" },
       callback: () => swapTask(Direction.UP),
-      allowWhen: Boolean(!selectedTask?.isCompleted),
+      allowWhen: selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: { key: "Enter" },
