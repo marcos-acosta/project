@@ -8,6 +8,8 @@ interface TaskListProps {
   inEditMode: boolean;
   currentText: string;
   setCurrentText: (newCurrentText: string) => void;
+  finishEditing: () => void;
+  cancel: () => void;
 }
 
 export default function TaskList(props: TaskListProps) {
@@ -26,6 +28,8 @@ export default function TaskList(props: TaskListProps) {
           inEditMode={props.inEditMode}
           currentText={props.currentText}
           setCurrentText={props.setCurrentText}
+          finishEditing={props.finishEditing}
+          cancel={props.cancel}
         />
       ))}
     </div>

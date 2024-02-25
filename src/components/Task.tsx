@@ -10,7 +10,11 @@ export interface TaskProps {
   inEditMode: boolean;
   currentText: string;
   setCurrentText: (newCurrentText: string) => void;
+  finishEditing: () => void;
+  cancel: () => void;
 }
+
+const PLACEHOLDER_TEXT = "task name";
 
 export default function Task(props: TaskProps) {
   const isThisTaskBeingEdited = props.isSelected && props.inEditMode;
@@ -33,7 +37,13 @@ export default function Task(props: TaskProps) {
           <input
             value={props.currentText}
             onChange={(e) => props.setCurrentText(e.target.value)}
-            size={Math.max(props.currentText.length, 1)}
+            size={
+              props.currentText.length
+                ? Math.max(props.currentText.length, 1)
+                : PLACEHOLDER_TEXT.length
+            }
+            onBlur={props.cancel}
+            placeholder={PLACEHOLDER_TEXT}
             autoFocus
           />
         ) : (

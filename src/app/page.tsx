@@ -6,6 +6,7 @@ import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/TaskList";
 import { useState } from "react";
 import useKeyboardControl, { KeyboardHook } from "react-keyboard-control";
+import { v4 as uuidv4 } from "uuid";
 import { clip } from "@/util";
 
 const DATE_NOW = Date.now();
@@ -82,13 +83,16 @@ export default function Home() {
   const [unsortedTasks, setUnsortedTasks] = useState(INITIAL_TASKS);
   const [currentText, setCurrentText] = useState("");
   const [inEditMode, setInEditMode] = useState(false);
+  const [temporaryTask, setTemporaryTask] = useState(null as TaskData | null);
   const uncompletedTasks = unsortedTasks
     .filter((task) => !task.isCompleted)
     .sort(sortUncompletedTasks);
   const completedTasks = unsortedTasks
     .filter((task) => task.isCompleted)
     .sort(sortCompletedTasks);
-  const tasks = [...completedTasks, ...uncompletedTasks];
+  const tasks = temporaryTask
+    ? [...completedTasks, temporaryTask, ...uncompletedTasks]
+    : [...completedTasks, ...uncompletedTasks];
 
   const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
   const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
@@ -150,7 +154,7 @@ export default function Home() {
       (swapDirection === Direction.UP &&
         selectedId === uncompletedTasks[0].taskId) ||
       (swapDirection === Direction.DOWN &&
-        selectedId === uncompletedTasks.at(-1)?.taskId)
+        selectedId === uncompletedTasks[uncompletedTasks.length - 1].taskId)
     ) {
       return;
     }
@@ -202,13 +206,85 @@ export default function Home() {
     if (!selectedTask) {
       return;
     }
-    setUnsortedTasks(
-      unsortedTasks.map((task) =>
-        task.taskId === selectedId ? { ...task, taskText: currentText } : task
-      )
-    );
+    if (temporaryTask) {
+      setUnsortedTasks([
+        ...unsortedTasks,
+        { ...temporaryTask, taskText: currentText },
+      ]);
+      setTemporaryTask(null);
+    } else {
+      setUnsortedTasks(
+        unsortedTasks.map((task) =>
+          task.taskId === selectedId ? { ...task, taskText: currentText } : task
+        )
+      );
+    }
     setInEditMode(false);
     setCurrentText("");
+  };
+
+  const addTask = () => {
+    const new_id = uuidv4();
+    setTemporaryTask({
+      taskText: "",
+      isCompleted: false,
+      creationTime: Date.now(),
+      sortingTime:
+        uncompletedTasks.length > 0
+          ? uncompletedTasks[0].sortingTime + 1
+          : Date.now(),
+      completionTime: null,
+      taskId: new_id,
+    });
+    setInEditMode(true);
+    setSelectedId(new_id);
+    setCurrentText("");
+  };
+
+  const navigateAfterTaskDisappears = () => {
+    if (!selectedTask || tasks.length === 1) {
+      return;
+    }
+    // If this is the very last task
+    if (selectedIndex === tasks.length - 1) {
+      // As long as there's at least 2 tasks, there is one before it
+      if (tasks.length > 1) {
+        setSelectedId(tasks[selectedIndex - 1].taskId);
+      }
+    }
+    // Not the last task
+    else {
+      // If this is the last completed task, but there's another completed task before it
+      if (
+        selectedTask.isCompleted &&
+        !tasks[selectedIndex + 1].isCompleted &&
+        completedTasks.length > 1
+      ) {
+        setSelectedId(tasks[selectedIndex - 1].taskId);
+      }
+      // In all other cases, move down (safe b/c it's not the last task)
+      else {
+        setSelectedId(tasks[selectedIndex + 1].taskId);
+      }
+    }
+  };
+
+  const cancelEditOrCreate = () => {
+    if (temporaryTask) {
+      setTemporaryTask(null);
+      if (uncompletedTasks.length > 0) {
+        setSelectedId(uncompletedTasks[0].taskId);
+      } else if (completedTasks && completedTasks.length > 0) {
+        setSelectedId(completedTasks[completedTasks.length - 1].taskId);
+      }
+    }
+    setInEditMode(false);
+    setCurrentText("");
+  };
+
+  const deleteTask = () => {
+    setUnsortedTasks(tasks.filter((task) => task.taskId !== selectedId));
+    navigateAfterTaskDisappears();
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -261,6 +337,20 @@ export default function Home() {
       allowWhen: inEditMode && currentText.length > 0,
       allowOnTextInput: true,
     },
+    {
+      keyboardEvent: { key: "a" },
+      callback: addTask,
+      preventDefault: true,
+    },
+    {
+      keyboardEvent: { key: "Escape" },
+      callback: cancelEditOrCreate,
+      allowOnTextInput: true,
+    },
+    {
+      keyboardEvent: [{ key: "d" }, { key: "d" }],
+      callback: deleteTask,
+    },
   ];
 
   useKeyboardControl(keyboardHooks);
@@ -272,8 +362,10 @@ export default function Home() {
           tasks={tasks}
           selectedTaskId={selectedId}
           inEditMode={inEditMode}
+          finishEditing={finishEditing}
           currentText={currentText}
           setCurrentText={setCurrentText}
+          cancel={cancelEditOrCreate}
         />
       </VerticallyCenteredList>
     </div>
