@@ -8,57 +8,64 @@ import { useState } from "react";
 import useKeyboardControl, { KeyboardHook } from "react-keyboard-control";
 import { v4 as uuidv4 } from "uuid";
 import { clip } from "@/util";
+import DetailPanel from "@/components/DetailPanel";
 
-const DATE_NOW = Date.now();
+const INITIAL_DATE = 1708661086000;
 
 const INITIAL_TASKS: TaskData[] = [
   {
     taskText: "argue with pigeons",
     taskId: "klm",
     isCompleted: false,
-    creationTime: DATE_NOW - 11,
-    sortingTime: DATE_NOW - 11,
+    creationTime: INITIAL_DATE - 11,
+    sortingTime: INITIAL_DATE - 11,
     completionTime: null,
+    notes: "",
   },
   {
     taskText: "water doug",
     taskId: "def",
     isCompleted: true,
-    creationTime: DATE_NOW - 5,
-    sortingTime: DATE_NOW - 5,
-    completionTime: DATE_NOW - 5,
+    creationTime: INITIAL_DATE - 5,
+    sortingTime: INITIAL_DATE - 5,
+    completionTime: INITIAL_DATE - 5,
+    notes: "",
   },
   {
     taskText: "watch paint dry",
     taskId: "nop",
     isCompleted: true,
-    creationTime: DATE_NOW - 4,
-    sortingTime: DATE_NOW - 4,
-    completionTime: DATE_NOW - 4,
+    creationTime: INITIAL_DATE - 4,
+    sortingTime: INITIAL_DATE - 4,
+    completionTime: INITIAL_DATE - 4,
+    notes: "",
   },
   {
     taskText: "catch up with schwartz-san",
     taskId: "ghi",
     isCompleted: false,
-    creationTime: DATE_NOW - 7,
-    sortingTime: DATE_NOW - 7,
+    creationTime: INITIAL_DATE - 7,
+    sortingTime: INITIAL_DATE - 7,
     completionTime: null,
+    notes: "",
   },
   {
     taskText: "perfectly toast bread",
     taskId: "qrs",
     isCompleted: true,
-    creationTime: DATE_NOW - 12,
-    sortingTime: DATE_NOW - 12,
-    completionTime: DATE_NOW - 12,
+    creationTime: INITIAL_DATE - 12,
+    sortingTime: INITIAL_DATE - 12,
+    completionTime: INITIAL_DATE - 12,
+    notes: "",
   },
   {
     taskText: "pet doggo",
     taskId: "abc",
     isCompleted: false,
-    creationTime: DATE_NOW - 3,
-    sortingTime: DATE_NOW - 3,
+    creationTime: INITIAL_DATE - 3,
+    sortingTime: INITIAL_DATE - 3,
     completionTime: null,
+    notes: "",
   },
 ];
 
@@ -84,6 +91,9 @@ export default function Home() {
   const [currentText, setCurrentText] = useState("");
   const [inEditMode, setInEditMode] = useState(false);
   const [temporaryTask, setTemporaryTask] = useState(null as TaskData | null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [currentNotes, setCurrentNotes] = useState("");
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const uncompletedTasks = unsortedTasks
     .filter((task) => !task.isCompleted)
     .sort(sortUncompletedTasks);
@@ -185,7 +195,9 @@ export default function Home() {
                 ? task.completionTime
                 : Date.now(),
               sortingTime: task.isCompleted
-                ? uncompletedTasks[0].sortingTime + 1
+                ? uncompletedTasks.length > 0
+                  ? uncompletedTasks[0].sortingTime + 1
+                  : Date.now()
                 : task.sortingTime,
             }
           : task
@@ -235,6 +247,7 @@ export default function Home() {
           : Date.now(),
       completionTime: null,
       taskId: new_id,
+      notes: "",
     });
     setInEditMode(true);
     setSelectedId(new_id);
@@ -280,11 +293,35 @@ export default function Home() {
     }
     setInEditMode(false);
     setCurrentText("");
+    setIsEditingNotes(false);
+    setCurrentNotes("");
   };
 
   const deleteTask = () => {
     setUnsortedTasks(tasks.filter((task) => task.taskId !== selectedId));
     navigateAfterTaskDisappears();
+  };
+
+  const beginEditingNotes = () => {
+    if (!selectedTask) {
+      return;
+    }
+    setShowDetails(true);
+    setIsEditingNotes(true);
+    setCurrentNotes(selectedTask.notes);
+  };
+
+  const finishEditingNotes = () => {
+    if (!selectedTask) {
+      return;
+    }
+    setUnsortedTasks(
+      unsortedTasks.map((task) =>
+        task.taskId === selectedId ? { ...task, notes: currentNotes } : task
+      )
+    );
+    setIsEditingNotes(false);
+    setCurrentNotes("");
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -313,7 +350,7 @@ export default function Home() {
       callback: () => jumpTo(Direction.UP, true),
     },
     {
-      keyboardEvent: { key: "Enter", metaKey: true },
+      keyboardEvent: { key: " " },
       callback: completeTask,
     },
     {
@@ -327,12 +364,13 @@ export default function Home() {
       allowWhen: selectedTask && !selectedTask.isCompleted,
     },
     {
-      keyboardEvent: { key: "Enter" },
+      keyboardEvent: [{ key: "e" }, { key: "t" }],
       callback: beginEditing,
-      allowWhen: !inEditMode,
+      allowWhen: !inEditMode && !isEditingNotes,
+      preventDefault: true,
     },
     {
-      keyboardEvent: { key: "Enter" },
+      keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditing,
       allowWhen: inEditMode && currentText.length > 0,
       allowOnTextInput: true,
@@ -351,23 +389,53 @@ export default function Home() {
       keyboardEvent: [{ key: "d" }, { key: "d" }],
       callback: deleteTask,
     },
+    {
+      keyboardEvent: { key: "q" },
+      callback: () => setShowDetails(!showDetails),
+    },
+    {
+      keyboardEvent: [{ key: "e" }, { key: "n" }],
+      callback: beginEditingNotes,
+      allowWhen: !isEditingNotes,
+      preventDefault: true,
+    },
+    {
+      keyboardEvent: { key: "Enter", metaKey: true },
+      callback: finishEditingNotes,
+      allowWhen: isEditingNotes,
+      allowOnTextInput: true,
+      preventDefault: true,
+    },
   ];
 
   useKeyboardControl(keyboardHooks);
 
   return (
-    <div className={styles.taskContainer}>
-      <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
-        <TaskList
-          tasks={tasks}
-          selectedTaskId={selectedId}
-          inEditMode={inEditMode}
-          finishEditing={finishEditing}
-          currentText={currentText}
-          setCurrentText={setCurrentText}
+    <div>
+      {showDetails && selectedTask && (
+        <DetailPanel
+          creationTime={selectedTask.creationTime}
+          completionTime={selectedTask.completionTime}
+          currentNotes={currentNotes}
+          setCurrentNotes={setCurrentNotes}
+          isEditingNotes={isEditingNotes}
+          notes={selectedTask.notes}
           cancel={cancelEditOrCreate}
         />
-      </VerticallyCenteredList>
+      )}
+      <div className={styles.taskContainer}>
+        <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
+          <TaskList
+            tasks={tasks}
+            selectedTaskId={selectedId}
+            inEditMode={inEditMode}
+            finishEditing={finishEditing}
+            currentText={currentText}
+            setCurrentText={setCurrentText}
+            cancel={cancelEditOrCreate}
+          />
+        </VerticallyCenteredList>
+      </div>
     </div>
   );
 }

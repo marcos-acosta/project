@@ -1,0 +1,38 @@
+.detailPanelContainer {
+  position: absolute;
+  top: 42.5vh;
+  right: 64vw;
+  background-color: #f6f6f6ff;
+  border-radius: 1vh;
+  width: 25vw;
+  font-size: 2.25vh;
+  padding: 2vh;
+}
+
+.detailPanelContainer.selected {
+  background-color: #fff2ccff;
+}
+
+.creationTime {
+  font-style: italic;
+}
+
+.completionTime {
+  font-style: italic;
+  color: #999999;
+}
+
+.notesText {
+  white-space: pre-line;
+}
+
+.inputNotes {
+  width: 100%;
+  resize: none;
+}
+
+.divider {
+  margin-top: 1vh;
+  margin-bottom: 2vh;
+  border-style: dashed;
+}

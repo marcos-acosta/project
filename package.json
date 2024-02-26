@@ -13,6 +13,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-keyboard-control": "^1.2.4",
+    "react-textarea-autosize": "^8.5.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

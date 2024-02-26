@@ -7,4 +7,5 @@ export interface TaskData {
   creationTime: EpochMillis;
   sortingTime: EpochMillis;
   completionTime: EpochMillis | null;
+  notes: string;
 }
