@@ -5,10 +5,20 @@ import { TaskData } from "@/interfaces/Task";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/TaskList";
 import { useState } from "react";
-import useKeyboardControl, { KeyboardHook } from "react-keyboard-control";
+import useKeyboardControl, {
+  KeyboardHook,
+  TypedKey,
+} from "react-keyboard-control";
 import { v4 as uuidv4 } from "uuid";
-import { clip } from "@/util";
+import {
+  clip,
+  formatMonthYear,
+  isMillisInMonth,
+  nextMonth,
+  previousMonth,
+} from "@/util";
 import DetailPanel from "@/components/DetailPanel";
+import KeypressDisplay from "@/components/KeypressDisplay";
 
 const INITIAL_DATE = 1708661086000;
 
@@ -71,6 +81,7 @@ const INITIAL_TASKS: TaskData[] = [
 
 const TASK_HEIGHT_IN_VH = 6;
 const DIVIDER_HEIGHT_IN_VH = 3;
+const MONTH_YEAR_TITLE_HEIGHT_IN_VH = 6;
 
 enum Direction {
   UP,
@@ -85,6 +96,11 @@ const sortCompletedTasks = (a: TaskData, b: TaskData) =>
     ? a.completionTime - b.completionTime
     : 0;
 
+const enum View {
+  HEAP_HOME,
+  HEAP_ARCHIVE,
+}
+
 export default function Home() {
   const [selectedId, setSelectedId] = useState("abc");
   const [unsortedTasks, setUnsortedTasks] = useState(INITIAL_TASKS);
@@ -94,6 +110,11 @@ export default function Home() {
   const [showDetails, setShowDetails] = useState(false);
   const [currentNotes, setCurrentNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [view, setView] = useState(View.HEAP_HOME);
+  const [monthYear, setMonthYear] = useState([
+    new Date().getMonth(),
+    new Date().getFullYear(),
+  ]);
   const uncompletedTasks = unsortedTasks
     .filter((task) => !task.isCompleted)
     .sort(sortUncompletedTasks);
@@ -102,7 +123,13 @@ export default function Home() {
     .sort(sortCompletedTasks);
   const tasks = temporaryTask
     ? [...completedTasks, temporaryTask, ...uncompletedTasks]
-    : [...completedTasks, ...uncompletedTasks];
+    : [...completedTasks, ...uncompletedTasks].filter(
+        (task) =>
+          view === View.HEAP_HOME ||
+          (view === View.HEAP_ARCHIVE &&
+            isMillisInMonth(task.creationTime, monthYear) &&
+            task.isCompleted)
+      );
 
   const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
   const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
@@ -110,7 +137,10 @@ export default function Home() {
   const scrollAmount = selectedTask
     ? -(
         tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH +
-        (dividerPresent && !selectedTask.isCompleted ? DIVIDER_HEIGHT_IN_VH : 0)
+        (dividerPresent && !selectedTask.isCompleted
+          ? DIVIDER_HEIGHT_IN_VH
+          : 0) +
+        (view === View.HEAP_ARCHIVE ? MONTH_YEAR_TITLE_HEIGHT_IN_VH : 0)
       )
     : 0;
 
@@ -326,6 +356,14 @@ export default function Home() {
 
   const keyboardHooks: KeyboardHook[] = [
     {
+      keyboardEvent: [{ key: "h" }, { key: "h" }],
+      callback: () => setView(View.HEAP_HOME),
+    },
+    {
+      keyboardEvent: [{ key: "h" }, { key: "a" }],
+      callback: () => setView(View.HEAP_ARCHIVE),
+    },
+    {
       keyboardEvent: { key: "k" },
       callback: () => navigateTasks(-1),
     },
@@ -356,12 +394,14 @@ export default function Home() {
     {
       keyboardEvent: { key: "J" },
       callback: () => swapTask(Direction.DOWN),
-      allowWhen: selectedTask && !selectedTask.isCompleted,
+      allowWhen:
+        view === View.HEAP_HOME && selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: { key: "K" },
       callback: () => swapTask(Direction.UP),
-      allowWhen: selectedTask && !selectedTask.isCompleted,
+      allowWhen:
+        view === View.HEAP_HOME && selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "t" }],
@@ -379,6 +419,7 @@ export default function Home() {
       keyboardEvent: { key: "a" },
       callback: addTask,
       preventDefault: true,
+      allowWhen: view === View.HEAP_HOME,
     },
     {
       keyboardEvent: { key: "Escape" },
@@ -402,13 +443,22 @@ export default function Home() {
     {
       keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditingNotes,
-      allowWhen: isEditingNotes,
+      allowWhen: isEditingNotes && currentNotes.length > 0,
       allowOnTextInput: true,
-      preventDefault: true,
+    },
+    {
+      keyboardEvent: { key: "m" },
+      callback: () => setMonthYear(nextMonth(monthYear)),
+      allowWhen: view === View.HEAP_ARCHIVE,
+    },
+    {
+      keyboardEvent: { key: "M" },
+      callback: () => setMonthYear(previousMonth(monthYear)),
+      allowWhen: view === View.HEAP_ARCHIVE,
     },
   ];
 
-  useKeyboardControl(keyboardHooks);
+  const currentSequence: TypedKey[] = useKeyboardControl(keyboardHooks);
 
   return (
     <div>
@@ -425,17 +475,29 @@ export default function Home() {
       )}
       <div className={styles.taskContainer}>
         <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
-          <TaskList
-            tasks={tasks}
-            selectedTaskId={selectedId}
-            inEditMode={inEditMode}
-            finishEditing={finishEditing}
-            currentText={currentText}
-            setCurrentText={setCurrentText}
-            cancel={cancelEditOrCreate}
-          />
+          <>
+            {view === View.HEAP_ARCHIVE && (
+              <div className={styles.monthDisplay}>
+                {formatMonthYear(monthYear)}
+              </div>
+            )}
+            <TaskList
+              tasks={tasks}
+              selectedTaskId={selectedId}
+              inEditMode={inEditMode}
+              finishEditing={finishEditing}
+              currentText={currentText}
+              setCurrentText={setCurrentText}
+              cancel={cancelEditOrCreate}
+            />
+          </>
         </VerticallyCenteredList>
       </div>
+      {currentSequence.length > 0 && (
+        <div className={styles.keypressDisplayContainer}>
+          <KeypressDisplay currentSequence={currentSequence} />
+        </div>
+      )}
     </div>
   );
 }
