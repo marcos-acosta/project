@@ -1,0 +1,9 @@
+.noTasks {
+  padding-top: 1vh;
+  padding-bottom: 1vh;
+  padding-left: 2vh;
+  padding-right: 2vh;
+  font-size: 2.5vh;
+  font-style: italic;
+  color: #999999;
+}

@@ -1,0 +1,20 @@
+.taskContainer {
+  height: 100vh;
+  padding-top: 42.5vh;
+  margin-left: 38vw;
+  overflow-y: hidden;
+}
+
+.keypressDisplayContainer {
+  position: absolute;
+  bottom: 2vw;
+  right: 2vw;
+}
+
+.monthDisplay {
+  font-size: 3vh;
+  font-style: italic;
+  height: 5vh;
+  margin-bottom: 1vh;
+  padding-left: 2vh;
+}

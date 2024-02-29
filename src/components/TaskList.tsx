@@ -1,6 +1,7 @@
 import React from "react";
 import Task from "./Task";
 import { TaskData } from "@/interfaces/Task";
+import styles from "./TaskList.module.css";
 
 interface TaskListProps {
   tasks: TaskData[];
@@ -32,6 +33,9 @@ export default function TaskList(props: TaskListProps) {
           cancel={props.cancel}
         />
       ))}
+      {props.tasks.length === 0 && (
+        <div className={styles.noTasks}>no tasks to show</div>
+      )}
     </div>
   );
 }
