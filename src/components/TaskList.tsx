@@ -5,7 +5,7 @@ import styles from "./TaskList.module.css";
 
 interface TaskListProps {
   tasks: TaskData[];
-  selectedTaskId: string;
+  selectedTaskId: string | null;
   inEditMode: boolean;
   currentText: string;
   setCurrentText: (newCurrentText: string) => void;

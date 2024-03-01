@@ -1,7 +1,7 @@
 "use client";
 
 import Heap from "@/components/Heap";
-import { TaskData } from "@/interfaces/Task";
+import { TaskData, View } from "@/interfaces/Task";
 import React, { useState } from "react";
 
 const INITIAL_DATE = 1708661086000;
@@ -65,5 +65,18 @@ const INITIAL_TASKS: TaskData[] = [
 
 export default function page() {
   const [tasks, setTasks] = useState(INITIAL_TASKS);
-  return <Heap unsortedTasks={tasks} setUnsortedTasks={setTasks} />;
+  const [view, setView] = useState(View.HEAP_HOME);
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <Heap
+      unsortedTasks={tasks}
+      setUnsortedTasks={setTasks}
+      view={view}
+      setView={setView}
+      showDetails={showDetails}
+      setShowDetails={setShowDetails}
+      key={view}
+    />
+  );
 }

@@ -50,7 +50,8 @@ const nextMonth = (monthYear: number[]): number[] => [
   monthYear[0] === 11 ? monthYear[1] + 1 : monthYear[1],
 ];
 
-const isMillisInMonth = (m: EpochMillis, monthYear: number[]) =>
+const isMillisInMonth = (m: EpochMillis | null, monthYear: number[]) =>
+  m &&
   new Date(m).getMonth() === monthYear[0] &&
   new Date(m).getFullYear() === monthYear[1];
 

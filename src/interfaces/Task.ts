@@ -9,3 +9,8 @@ export interface TaskData {
   completionTime: EpochMillis | null;
   notes: string;
 }
+
+export const enum View {
+  HEAP_HOME,
+  HEAP_ARCHIVE,
+}
