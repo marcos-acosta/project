@@ -151,7 +151,7 @@ export default function Heap(props: HeapProps) {
     }
   };
 
-  const swapTask = async (swapDirection: Direction) => {
+  const swapTask = (swapDirection: Direction) => {
     if (!selectedTask || !selectedId) {
       return;
     }
@@ -168,11 +168,11 @@ export default function Heap(props: HeapProps) {
     const selectedSortingTime = selectedTask.sortingTime;
     const otherTaskId = otherTask.taskId;
     const otherSortingTime = otherTask.sortingTime;
-    await editTaskInDatabase(selectedId, { sortingTime: otherSortingTime });
-    await editTaskInDatabase(otherTaskId, { sortingTime: selectedSortingTime });
+    editTaskInDatabase(selectedId, { sortingTime: otherSortingTime });
+    editTaskInDatabase(otherTaskId, { sortingTime: selectedSortingTime });
   };
 
-  const completeTask = async () => {
+  const completeTask = () => {
     if (!selectedId || !selectedTask) {
       return;
     }
@@ -188,7 +188,7 @@ export default function Heap(props: HeapProps) {
         : selectedTask.sortingTime,
     };
     navigateAfterToggleCompletion();
-    await editTaskInDatabase(selectedId, newTask);
+    editTaskInDatabase(selectedId, newTask);
   };
 
   const beginEditing = () => {
@@ -199,7 +199,7 @@ export default function Heap(props: HeapProps) {
     setCurrentText(selectedTask.taskText);
   };
 
-  const finishEditing = async () => {
+  const finishEditing = () => {
     if (!selectedTask || !selectedId) {
       return;
     }
@@ -210,9 +210,9 @@ export default function Heap(props: HeapProps) {
       };
       setTemporaryTask(null);
       setSelectedId(temporaryTask.taskId);
-      await addTaskToDatabase(temporaryTask.taskId, newTask);
+      addTaskToDatabase(temporaryTask.taskId, newTask);
     } else {
-      await editTaskInDatabase(selectedId, {
+      editTaskInDatabase(selectedId, {
         taskText: currentText,
       });
     }
@@ -282,12 +282,12 @@ export default function Heap(props: HeapProps) {
     setCurrentNotes("");
   };
 
-  const deleteTask = async () => {
+  const deleteTask = () => {
     if (!selectedId) {
       return;
     }
     navigateAfterTaskDisappears();
-    await deleteTaskFromDatabase(selectedId);
+    deleteTaskFromDatabase(selectedId);
   };
 
   const beginEditingNotes = () => {
@@ -299,11 +299,11 @@ export default function Heap(props: HeapProps) {
     setCurrentNotes(selectedTask.notes);
   };
 
-  const finishEditingNotes = async () => {
+  const finishEditingNotes = () => {
     if (!selectedId || !selectedTask) {
       return;
     }
-    await editTaskInDatabase(selectedId, { notes: currentNotes });
+    editTaskInDatabase(selectedId, { notes: currentNotes });
     setIsEditingNotes(false);
     setCurrentNotes("");
   };
