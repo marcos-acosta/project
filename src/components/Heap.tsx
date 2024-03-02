@@ -2,7 +2,7 @@ import styles from "./Heap.module.css";
 import { TaskData, View } from "@/interfaces/Task";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/TaskList";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useKeyboardControl, {
   KeyboardHook,
   TypedKey,
@@ -11,12 +11,18 @@ import { v4 as uuidv4 } from "uuid";
 import {
   clip,
   formatMonthYear,
-  isMillisInMonth,
+  getNowInSeconds,
+  isSecondsInMonth,
   nextMonth,
   previousMonth,
 } from "@/util";
 import DetailPanel from "@/components/DetailPanel";
 import KeypressDisplay from "@/components/KeypressDisplay";
+import {
+  addTaskToDatabase,
+  deleteTaskFromDatabase,
+  editTaskInDatabase,
+} from "@/firebase/heap";
 
 const TASK_HEIGHT_IN_VH = 6;
 const DIVIDER_HEIGHT_IN_VH = 3;
@@ -38,7 +44,6 @@ const sortCompletedTasks = (a: TaskData, b: TaskData) =>
 
 interface HeapProps {
   unsortedTasks: TaskData[];
-  setUnsortedTasks: (newTasks: TaskData[]) => void;
   view: View;
   setView: (v: View) => void;
   showDetails: boolean;
@@ -79,20 +84,19 @@ export default function Heap(props: HeapProps) {
   const completedTasksForView =
     props.view === View.HEAP_ARCHIVE
       ? completedTasks.filter((task) =>
-          isMillisInMonth(task.completionTime, monthYear)
+          isSecondsInMonth(task.completionTime, monthYear)
         )
       : completedTasks.slice(-1 * RECENTLY_COMPLETED_TASKS_TO_KEEP);
   const tasks = temporaryTask
     ? [...completedTasksForView, temporaryTask, ...uncompletedTasksForView]
     : [...completedTasksForView, ...uncompletedTasksForView];
 
-  const [selectedId_, setSelectedId] = useState(getIdealFirstTask(tasks));
-  const selectedId = tasks.find((task) => task.taskId === selectedId_)
-    ? selectedId_
-    : getIdealFirstTask(tasks);
+  const [selectedId, setSelectedId] = useState(getIdealFirstTask(tasks));
 
   const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
   const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
+
+  console.log(selectedTask ? selectedTask.taskText : "no task");
 
   const dividerPresent = completedTasks.length > 0;
   const scrollAmount = selectedTask
@@ -147,8 +151,8 @@ export default function Heap(props: HeapProps) {
     }
   };
 
-  const swapTask = (swapDirection: Direction) => {
-    if (!selectedTask) {
+  const swapTask = async (swapDirection: Direction) => {
+    if (!selectedTask || !selectedId) {
       return;
     }
     if (
@@ -164,37 +168,27 @@ export default function Heap(props: HeapProps) {
     const selectedSortingTime = selectedTask.sortingTime;
     const otherTaskId = otherTask.taskId;
     const otherSortingTime = otherTask.sortingTime;
-    props.setUnsortedTasks(
-      props.unsortedTasks.map((task) =>
-        task.taskId === selectedId
-          ? { ...task, sortingTime: otherSortingTime }
-          : task.taskId === otherTaskId
-          ? { ...task, sortingTime: selectedSortingTime }
-          : task
-      )
-    );
+    await editTaskInDatabase(selectedId, { sortingTime: otherSortingTime });
+    await editTaskInDatabase(otherTaskId, { sortingTime: selectedSortingTime });
   };
 
-  const completeTask = () => {
-    props.setUnsortedTasks(
-      props.unsortedTasks.map((task) =>
-        task.taskId === selectedId
-          ? {
-              ...task,
-              isCompleted: !task.isCompleted,
-              completionTime: task.isCompleted
-                ? task.completionTime
-                : Date.now(),
-              sortingTime: task.isCompleted
-                ? uncompletedTasks.length > 0
-                  ? uncompletedTasks[0].sortingTime + 1
-                  : Date.now()
-                : task.sortingTime,
-            }
-          : task
-      )
-    );
+  const completeTask = async () => {
+    if (!selectedId || !selectedTask) {
+      return;
+    }
+    const newTask: Partial<TaskData> = {
+      isCompleted: !selectedTask.isCompleted,
+      completionTime: selectedTask.isCompleted
+        ? selectedTask.completionTime
+        : getNowInSeconds(),
+      sortingTime: selectedTask.isCompleted
+        ? uncompletedTasks.length > 0
+          ? uncompletedTasks[0].sortingTime + 1
+          : getNowInSeconds()
+        : selectedTask.sortingTime,
+    };
     navigateAfterToggleCompletion();
+    await editTaskInDatabase(selectedId, newTask);
   };
 
   const beginEditing = () => {
@@ -205,22 +199,22 @@ export default function Heap(props: HeapProps) {
     setCurrentText(selectedTask.taskText);
   };
 
-  const finishEditing = () => {
-    if (!selectedTask) {
+  const finishEditing = async () => {
+    if (!selectedTask || !selectedId) {
       return;
     }
     if (temporaryTask) {
-      props.setUnsortedTasks([
-        ...props.unsortedTasks,
-        { ...temporaryTask, taskText: currentText },
-      ]);
+      const newTask: TaskData = {
+        ...temporaryTask,
+        taskText: currentText,
+      };
       setTemporaryTask(null);
+      setSelectedId(temporaryTask.taskId);
+      await addTaskToDatabase(temporaryTask.taskId, newTask);
     } else {
-      props.setUnsortedTasks(
-        props.unsortedTasks.map((task) =>
-          task.taskId === selectedId ? { ...task, taskText: currentText } : task
-        )
-      );
+      await editTaskInDatabase(selectedId, {
+        taskText: currentText,
+      });
     }
     setInEditMode(false);
     setCurrentText("");
@@ -231,11 +225,11 @@ export default function Heap(props: HeapProps) {
     setTemporaryTask({
       taskText: "",
       isCompleted: false,
-      creationTime: Date.now(),
+      creationTime: getNowInSeconds(),
       sortingTime:
         uncompletedTasks.length > 0
           ? uncompletedTasks[0].sortingTime + 1
-          : Date.now(),
+          : getNowInSeconds(),
       completionTime: null,
       taskId: new_id,
       notes: "",
@@ -288,9 +282,12 @@ export default function Heap(props: HeapProps) {
     setCurrentNotes("");
   };
 
-  const deleteTask = () => {
-    props.setUnsortedTasks(tasks.filter((task) => task.taskId !== selectedId));
+  const deleteTask = async () => {
+    if (!selectedId) {
+      return;
+    }
     navigateAfterTaskDisappears();
+    await deleteTaskFromDatabase(selectedId);
   };
 
   const beginEditingNotes = () => {
@@ -302,15 +299,11 @@ export default function Heap(props: HeapProps) {
     setCurrentNotes(selectedTask.notes);
   };
 
-  const finishEditingNotes = () => {
-    if (!selectedTask) {
+  const finishEditingNotes = async () => {
+    if (!selectedId || !selectedTask) {
       return;
     }
-    props.setUnsortedTasks(
-      props.unsortedTasks.map((task) =>
-        task.taskId === selectedId ? { ...task, notes: currentNotes } : task
-      )
-    );
+    await editTaskInDatabase(selectedId, { notes: currentNotes });
     setIsEditingNotes(false);
     setCurrentNotes("");
   };
@@ -408,7 +401,7 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditingNotes,
-      allowWhen: isEditingNotes && currentNotes.length > 0,
+      allowWhen: isEditingNotes,
       allowOnTextInput: true,
     },
     {
