@@ -49,10 +49,13 @@ export default function Task(props: TaskProps) {
         ) : (
           <span
             className={classnames(
-              props.taskData.isCompleted && styles.completed
+              props.taskData.isCompleted && styles.completed,
+              props.taskData.isBlocked && styles.blocked
             )}
           >
+            {props.taskData.isBlocked && "("}
             {props.taskData.taskText}
+            {props.taskData.isBlocked && ")"}
           </span>
         )}
       </div>

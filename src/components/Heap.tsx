@@ -96,8 +96,6 @@ export default function Heap(props: HeapProps) {
   const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
   const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
 
-  console.log(selectedTask ? selectedTask.taskText : "no task");
-
   const dividerPresent = completedTasks.length > 0;
   const scrollAmount = selectedTask
     ? -(
@@ -225,6 +223,7 @@ export default function Heap(props: HeapProps) {
     setTemporaryTask({
       taskText: "",
       isCompleted: false,
+      isBlocked: false,
       creationTime: getNowInSeconds(),
       sortingTime:
         uncompletedTasks.length > 0
@@ -306,6 +305,13 @@ export default function Heap(props: HeapProps) {
     editTaskInDatabase(selectedId, { notes: currentNotes });
     setIsEditingNotes(false);
     setCurrentNotes("");
+  };
+
+  const toggleTaskBlocked = () => {
+    if (!selectedId || !selectedTask) {
+      return;
+    }
+    editTaskInDatabase(selectedId, { isBlocked: !selectedTask.isBlocked });
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -419,6 +425,11 @@ export default function Heap(props: HeapProps) {
       callback: () =>
         setMonthYear([new Date().getMonth(), new Date().getFullYear()]),
       allowWhen: props.view === View.HEAP_ARCHIVE,
+    },
+    {
+      keyboardEvent: { key: "@" },
+      callback: toggleTaskBlocked,
+      allowWhen: selectedTask && !selectedTask.isCompleted,
     },
   ];
 

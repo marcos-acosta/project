@@ -29,3 +29,7 @@
 .task.selected.beingEdited {
   background-color: #ffe599ff;
 }
+
+.blocked {
+  color: #999999;
+}

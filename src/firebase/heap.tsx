@@ -34,6 +34,7 @@ const taskDataToDatabaseTask = (taskData: TaskData): DatabaseTaskData => {
   return {
     taskText: taskData.taskText,
     isCompleted: taskData.isCompleted,
+    isBlocked: taskData.isBlocked,
     creationTime: new Timestamp(taskData.creationTime, 0),
     sortingTime: new Timestamp(taskData.sortingTime, 0),
     completionTime: taskData.completionTime
@@ -52,6 +53,9 @@ const partialTaskDataToDatabaseTask = (
   }
   if (partialTaskData.isCompleted !== undefined) {
     databaseTask.isCompleted = partialTaskData.isCompleted;
+  }
+  if (partialTaskData.isBlocked !== undefined) {
+    databaseTask.isBlocked = partialTaskData.isBlocked;
   }
   if (partialTaskData.creationTime) {
     databaseTask.creationTime = new Timestamp(partialTaskData.creationTime, 0);
@@ -76,6 +80,7 @@ const documentToTaskData = (doc: QueryDocumentSnapshot): TaskData => {
     taskText: docData.taskText,
     taskId: doc.id,
     isCompleted: docData.isCompleted,
+    isBlocked: docData.isBlocked,
     creationTime: docData.creationTime.seconds,
     sortingTime: docData.sortingTime.seconds,
     completionTime: docData.completionTime

@@ -8,6 +8,7 @@ export interface TaskData {
   taskText: string;
   taskId: string;
   isCompleted: boolean;
+  isBlocked: boolean;
   creationTime: EpochSeconds;
   sortingTime: EpochSeconds;
   completionTime: EpochSeconds | null;
@@ -17,6 +18,7 @@ export interface TaskData {
 export interface DatabaseTaskData {
   taskText: string;
   isCompleted: boolean;
+  isBlocked: boolean;
   creationTime: Timestamp;
   sortingTime: Timestamp;
   completionTime: Timestamp | null;
