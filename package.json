@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.2.1",
     "firebase": "^10.8.1",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
     "react-firebase-hooks": "^5.1.1",
     "react-keyboard-control": "^1.2.4",
+    "react-redux": "^9.1.0",
     "react-textarea-autosize": "^8.5.3",
     "uuid": "^9.0.1"
   },

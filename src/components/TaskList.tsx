@@ -1,6 +1,6 @@
 import React from "react";
 import Task from "./Task";
-import { TaskData } from "@/interfaces/Task";
+import { TaskData } from "@/interfaces/Interfaces";
 import styles from "./TaskList.module.css";
 
 interface TaskListProps {

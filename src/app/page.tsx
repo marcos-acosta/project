@@ -1,10 +1,12 @@
 "use client";
 
-import { TaskData } from "@/interfaces/Task";
+import { TaskData } from "@/interfaces/Interfaces";
 import React from "react";
 import HeapProvider from "@/components/HeapProvider";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { documentToTaskData, heapCollection } from "@/firebase/heap";
+import { Provider } from "react-redux";
+import store from "./store";
 
 export default function page() {
   const [heapDocs, heapLoading, heapError] = useCollection(heapCollection);
@@ -13,5 +15,11 @@ export default function page() {
     : [];
   const heapReady = !heapLoading && !heapError;
 
-  return heapReady && <HeapProvider tasks={heapTasks} />;
+  return (
+    heapReady && (
+      <Provider store={store}>
+        <HeapProvider tasks={heapTasks} />
+      </Provider>
+    )
+  );
 }

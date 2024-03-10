@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./DetailPanel.module.css";
-import { EpochMillis } from "@/interfaces/Task";
+import { EpochMillis } from "@/interfaces/Interfaces";
 import { classnames, formatMillisToLocaleDate } from "@/util";
 import ReactTextareaAutosize from "react-textarea-autosize";
 

@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { collection, getDocs } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
-import { DatabaseTaskData, TaskData } from "@/interfaces/Task";
+import { DatabaseTaskData, TaskData } from "@/interfaces/Interfaces";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,

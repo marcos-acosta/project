@@ -1,4 +1,4 @@
-import { EpochSeconds } from "./interfaces/Task";
+import { EpochSeconds } from "./interfaces/Interfaces";
 
 const MONTH_NAMES = [
   "jan",
