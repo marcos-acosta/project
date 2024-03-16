@@ -17,14 +17,11 @@ import {
   previousMonth,
 } from "@/util";
 import DetailPanel from "@/components/DetailPanel";
-import KeypressDisplay from "@/components/KeypressDisplay";
 import {
   addTaskToDatabase,
   deleteTaskFromDatabase,
   editTaskInDatabase,
 } from "@/firebase/heap";
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { switchToHeapArchive, switchToHeapHome } from "@/features/viewSlice";
 
 const TASK_HEIGHT_IN_VH = 6;
 const DIVIDER_HEIGHT_IN_VH = 3;
@@ -48,6 +45,9 @@ interface HeapProps {
   unsortedTasks: TaskData[];
   showDetails: boolean;
   setShowDetails: (b: boolean) => void;
+  inArchive: boolean;
+  setView: (v: View) => void;
+  setCurrentSequence: (s: TypedKey[]) => void;
 }
 
 const getIdealFirstTask = (tasks: TaskData[]) => {
@@ -73,8 +73,6 @@ export default function Heap(props: HeapProps) {
     new Date().getMonth(),
     new Date().getFullYear(),
   ]);
-  const viewNew = useAppSelector((state) => state.view.view);
-  const dispatch = useAppDispatch();
 
   const uncompletedTasks = props.unsortedTasks
     .filter((task) => !task.isCompleted)
@@ -82,14 +80,12 @@ export default function Heap(props: HeapProps) {
   const completedTasks = props.unsortedTasks
     .filter((task) => task.isCompleted)
     .sort(sortCompletedTasks);
-  const uncompletedTasksForView =
-    viewNew === View.HEAP_ARCHIVE ? [] : uncompletedTasks;
-  const completedTasksForView =
-    viewNew === View.HEAP_ARCHIVE
-      ? completedTasks.filter((task) =>
-          isSecondsInMonth(task.completionTime, monthYear)
-        )
-      : completedTasks.slice(-1 * RECENTLY_COMPLETED_TASKS_TO_KEEP);
+  const uncompletedTasksForView = props.inArchive ? [] : uncompletedTasks;
+  const completedTasksForView = props.inArchive
+    ? completedTasks.filter((task) =>
+        isSecondsInMonth(task.completionTime, monthYear)
+      )
+    : completedTasks.slice(-1 * RECENTLY_COMPLETED_TASKS_TO_KEEP);
   const tasks = temporaryTask
     ? [...completedTasksForView, temporaryTask, ...uncompletedTasksForView]
     : [...completedTasksForView, ...uncompletedTasksForView];
@@ -106,7 +102,7 @@ export default function Heap(props: HeapProps) {
         (dividerPresent && !selectedTask.isCompleted
           ? DIVIDER_HEIGHT_IN_VH
           : 0) +
-        (viewNew === View.HEAP_ARCHIVE ? MONTH_YEAR_TITLE_HEIGHT_IN_VH : 0)
+        (props.inArchive ? MONTH_YEAR_TITLE_HEIGHT_IN_VH : 0)
       )
     : 0;
 
@@ -320,13 +316,11 @@ export default function Heap(props: HeapProps) {
   const keyboardHooks: KeyboardHook[] = [
     {
       keyboardEvent: [{ key: "h" }, { key: "h" }],
-      // callback: () => props.setView(View.HEAP_HOME),
-      callback: () => dispatch(switchToHeapHome()),
+      callback: () => props.setView(View.HEAP_HOME),
     },
     {
       keyboardEvent: [{ key: "h" }, { key: "a" }],
-      // callback: () => props.setView(View.HEAP_ARCHIVE),
-      callback: () => dispatch(switchToHeapArchive()),
+      callback: () => props.setView(View.HEAP_ARCHIVE),
     },
     {
       keyboardEvent: { key: "k" },
@@ -359,14 +353,12 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: { key: "J" },
       callback: () => swapTask(Direction.DOWN),
-      allowWhen:
-        viewNew === View.HEAP_HOME && selectedTask && !selectedTask.isCompleted,
+      allowWhen: !props.inArchive && selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: { key: "K" },
       callback: () => swapTask(Direction.UP),
-      allowWhen:
-        viewNew === View.HEAP_HOME && selectedTask && !selectedTask.isCompleted,
+      allowWhen: !props.inArchive && selectedTask && !selectedTask.isCompleted,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "t" }],
@@ -384,7 +376,7 @@ export default function Heap(props: HeapProps) {
       keyboardEvent: { key: "a" },
       callback: addTask,
       preventDefault: true,
-      allowWhen: viewNew === View.HEAP_HOME,
+      allowWhen: !props.inArchive,
     },
     {
       keyboardEvent: { key: "Escape" },
@@ -414,18 +406,18 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: { key: "m" },
       callback: () => setMonthYear(nextMonth(monthYear)),
-      allowWhen: viewNew === View.HEAP_ARCHIVE,
+      allowWhen: props.inArchive,
     },
     {
       keyboardEvent: { key: "M" },
       callback: () => setMonthYear(previousMonth(monthYear)),
-      allowWhen: viewNew === View.HEAP_ARCHIVE,
+      allowWhen: props.inArchive,
     },
     {
       keyboardEvent: { key: "." },
       callback: () =>
         setMonthYear([new Date().getMonth(), new Date().getFullYear()]),
-      allowWhen: viewNew === View.HEAP_ARCHIVE,
+      allowWhen: props.inArchive,
     },
     {
       keyboardEvent: { key: "@" },
@@ -434,7 +426,7 @@ export default function Heap(props: HeapProps) {
     },
   ];
 
-  const currentSequence: TypedKey[] = useKeyboardControl(keyboardHooks);
+  props.setCurrentSequence(useKeyboardControl(keyboardHooks));
 
   return (
     <div>
@@ -452,7 +444,7 @@ export default function Heap(props: HeapProps) {
       <div className={styles.taskContainer}>
         <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
           <>
-            {viewNew === View.HEAP_ARCHIVE && (
+            {props.inArchive && (
               <div className={styles.monthDisplay}>
                 {formatMonthYear(monthYear)}
               </div>
@@ -469,11 +461,6 @@ export default function Heap(props: HeapProps) {
           </>
         </VerticallyCenteredList>
       </div>
-      {currentSequence.length > 0 && (
-        <div className={styles.keypressDisplayContainer}>
-          <KeypressDisplay currentSequence={currentSequence} />
-        </div>
-      )}
     </div>
   );
 }
