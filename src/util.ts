@@ -23,12 +23,15 @@ const clip = (n: number, lower: number, upper: number) =>
   Math.min(Math.max(n, lower), upper);
 
 const formatMillisToLocaleDate = (s: EpochSeconds) =>
-  new Date(s * 1000)
-    .toLocaleDateString(undefined, {
+  formatDateToLocaleDate(new Date(s * 1000), true);
+
+const formatDateToLocaleDate = (date: Date, includeYear: boolean) =>
+  date
+    .toLocaleDateString("en-US", {
       weekday: "short",
-      year: "numeric",
+      year: includeYear ? "numeric" : undefined,
       month: "short",
-      day: "numeric",
+      day: "2-digit",
     })
     .toLocaleLowerCase();
 
@@ -60,6 +63,31 @@ const formatMonthYear = (monthYear: number[]) =>
 
 const getNowInSeconds = (): number => Math.floor(Date.now() / 1000);
 
+const formatDateToIso = (date: Date) => date.toLocaleDateString("en-CA");
+
+const addDays = (date: Date, days: number) => {
+  let tempDate = new Date(date);
+  tempDate.setDate(tempDate.getDate() + days);
+  return tempDate;
+};
+
+const arrayRange = (start: number, stop: number, step: number) =>
+  Array.from(
+    { length: (stop - start) / step + 1 },
+    (value, index) => start + index * step
+  );
+
+const getDateRange = (selectedDate: Date, maxNumDays: number) => {
+  const daysBeforeSelectedDate = -Math.floor(maxNumDays / 2);
+  return arrayRange(
+    daysBeforeSelectedDate,
+    daysBeforeSelectedDate + maxNumDays - 1,
+    1
+  )
+    .map((offset) => addDays(selectedDate, offset))
+    .filter((date) => date <= new Date());
+};
+
 export {
   mod,
   classnames,
@@ -71,4 +99,8 @@ export {
   isSecondsInMonth,
   formatMonthYear,
   getNowInSeconds,
+  formatDateToIso,
+  addDays,
+  getDateRange,
+  formatDateToLocaleDate,
 };

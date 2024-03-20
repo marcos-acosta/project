@@ -2,7 +2,7 @@ import styles from "./Heap.module.css";
 import { TaskData, View } from "@/interfaces/Interfaces";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/TaskList";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useKeyboardControl, {
   KeyboardHook,
   TypedKey,
@@ -21,7 +21,7 @@ import {
   addTaskToDatabase,
   deleteTaskFromDatabase,
   editTaskInDatabase,
-} from "@/firebase/heap";
+} from "@/firebase/heap-service";
 
 const TASK_HEIGHT_IN_VH = 6;
 const DIVIDER_HEIGHT_IN_VH = 3;
@@ -46,7 +46,7 @@ interface HeapProps {
   showDetails: boolean;
   setShowDetails: (b: boolean) => void;
   inArchive: boolean;
-  setView: (v: View) => void;
+  viewKeyhooks: KeyboardHook[];
   setCurrentSequence: (s: TypedKey[]) => void;
 }
 
@@ -314,14 +314,7 @@ export default function Heap(props: HeapProps) {
   };
 
   const keyboardHooks: KeyboardHook[] = [
-    {
-      keyboardEvent: [{ key: "h" }, { key: "h" }],
-      callback: () => props.setView(View.HEAP_HOME),
-    },
-    {
-      keyboardEvent: [{ key: "h" }, { key: "a" }],
-      callback: () => props.setView(View.HEAP_ARCHIVE),
-    },
+    ...props.viewKeyhooks,
     {
       keyboardEvent: { key: "k" },
       callback: () => navigateTasks(-1),
@@ -331,19 +324,19 @@ export default function Heap(props: HeapProps) {
       callback: () => navigateTasks(1),
     },
     {
-      keyboardEvent: { key: "b" },
+      keyboardEvent: { key: "[" },
       callback: () => jumpTo(Direction.DOWN, false),
     },
     {
-      keyboardEvent: { key: "t" },
+      keyboardEvent: { key: "]" },
       callback: () => jumpTo(Direction.UP, false),
     },
     {
-      keyboardEvent: { key: "B" },
+      keyboardEvent: { key: "{" },
       callback: () => jumpTo(Direction.DOWN, true),
     },
     {
-      keyboardEvent: { key: "T" },
+      keyboardEvent: { key: "}" },
       callback: () => jumpTo(Direction.UP, true),
     },
     {
@@ -426,7 +419,10 @@ export default function Heap(props: HeapProps) {
     },
   ];
 
-  props.setCurrentSequence(useKeyboardControl(keyboardHooks));
+  const currentSequence = useKeyboardControl(keyboardHooks);
+  useEffect(() => {
+    props.setCurrentSequence(currentSequence);
+  }, [props.setCurrentSequence, currentSequence]);
 
   return (
     <div>

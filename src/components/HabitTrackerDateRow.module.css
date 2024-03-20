@@ -1,0 +1,10 @@
+.selectedDate {
+  background-color: #ffe599ff;
+}
+
+.trackerCell {
+  padding-left: 0.5vw;
+  padding-right: 0.5vw;
+  padding-bottom: 0.25vw;
+  padding-top: 0.25vw;
+}

@@ -1,13 +1,13 @@
 import { TaskData, View } from "@/interfaces/Interfaces";
 import React, { useState } from "react";
 import Heap from "./Heap";
-import { TypedKey } from "react-keyboard-control";
+import { KeyboardHook, TypedKey } from "react-keyboard-control";
 
 interface HeapProviderProps {
   unsortedTasks: TaskData[];
   view: View;
-  setView: (v: View) => void;
   setCurrentSequence: (s: TypedKey[]) => void;
+  viewKeyhooks: KeyboardHook[];
 }
 
 export default function HeapProvider(props: HeapProviderProps) {
@@ -18,7 +18,7 @@ export default function HeapProvider(props: HeapProviderProps) {
       showDetails={showDetails}
       setShowDetails={setShowDetails}
       inArchive={props.view === View.HEAP_ARCHIVE}
-      setView={props.setView}
+      viewKeyhooks={props.viewKeyhooks}
       setCurrentSequence={props.setCurrentSequence}
       key={props.view}
     />

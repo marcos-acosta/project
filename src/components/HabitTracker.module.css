@@ -1,0 +1,15 @@
+.habitTrackerTable {
+  font-size: 1.7vw;
+  border-collapse: collapse;
+}
+
+.habitTrackerHeader {
+  writing-mode: vertical-rl;
+}
+
+.habitTrackerContainer {
+  display: flex;
+  width: 100vw;
+  justify-content: center;
+  margin-top: 12vh;
+}

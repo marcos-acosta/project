@@ -25,7 +25,21 @@ export interface DatabaseTaskData {
   notes: string;
 }
 
+export interface HabitTrackerDate {
+  dateString: string;
+  dateObject: Date;
+  habitLog: { [habit_id: string]: string };
+}
+
+export interface HabitDefinition {
+  habitId: string;
+  habitName: string;
+  habitDescription: string;
+  habitScbedule: string;
+}
+
 export const enum View {
   HEAP_HOME,
   HEAP_ARCHIVE,
+  HABIT_TRACKER,
 }
