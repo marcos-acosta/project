@@ -1,7 +1,7 @@
 import styles from "./Heap.module.css";
-import { TaskData, View } from "@/interfaces/Interfaces";
+import { MaybeMonthPeriod, TaskData, View } from "@/interfaces/Interfaces";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
-import TaskList from "@/components/TaskList";
+import TaskList from "@/components/heap/TaskList";
 import { useEffect, useState } from "react";
 import useKeyboardControl, {
   KeyboardHook,
@@ -9,14 +9,13 @@ import useKeyboardControl, {
 } from "react-keyboard-control";
 import { v4 as uuidv4 } from "uuid";
 import {
+  addMonths,
   clip,
+  currentMonthPeriod,
   formatMonthYear,
   getNowInSeconds,
-  isSecondsInMonth,
-  nextMonth,
-  previousMonth,
 } from "@/util";
-import DetailPanel from "@/components/DetailPanel";
+import DetailPanel from "@/components/heap/DetailPanel";
 import {
   addTaskToDatabase,
   deleteTaskFromDatabase,
@@ -24,9 +23,7 @@ import {
 } from "@/firebase/heap-service";
 
 const TASK_HEIGHT_IN_VH = 6;
-const DIVIDER_HEIGHT_IN_VH = 3;
 const MONTH_YEAR_TITLE_HEIGHT_IN_VH = 6;
-const RECENTLY_COMPLETED_TASKS_TO_KEEP = 10;
 
 enum Direction {
   UP,
@@ -41,27 +38,33 @@ const sortCompletedTasks = (a: TaskData, b: TaskData) =>
     ? a.completionTime - b.completionTime
     : 0;
 
+const sortTasks = (a: TaskData, b: TaskData) =>
+  a.isCompleted && b.isCompleted
+    ? sortCompletedTasks(a, b)
+    : !a.isCompleted && !b.isCompleted
+    ? sortUncompletedTasks(a, b)
+    : Number(a.isCompleted) - Number(b.isCompleted);
+
+const selectFirstTaskIfPossible = (tasks: TaskData[]) =>
+  tasks.length > 0 ? tasks[0].taskId : null;
+
+const getTaskIndexIfPossible = (tasks: TaskData[], taskId: string | null) => {
+  if (!taskId) {
+    return null;
+  }
+  const index = tasks.findIndex((task) => task.taskId === taskId);
+  return index === -1 ? null : index;
+};
+
 interface HeapProps {
   unsortedTasks: TaskData[];
   showDetails: boolean;
   setShowDetails: (b: boolean) => void;
-  inArchive: boolean;
   viewKeyhooks: KeyboardHook[];
   setCurrentSequence: (s: TypedKey[]) => void;
+  monthPeriod: MaybeMonthPeriod;
+  setMonthPeriod: (m: MaybeMonthPeriod) => void;
 }
-
-const getIdealFirstTask = (tasks: TaskData[]) => {
-  if (tasks.length === 0) {
-    return null;
-  } else {
-    const firstUncompleted = tasks.find((task) => !task.isCompleted);
-    if (firstUncompleted) {
-      return firstUncompleted.taskId;
-    } else {
-      return tasks[0].taskId;
-    }
-  }
-};
 
 export default function Heap(props: HeapProps) {
   const [currentText, setCurrentText] = useState("");
@@ -69,45 +72,27 @@ export default function Heap(props: HeapProps) {
   const [temporaryTask, setTemporaryTask] = useState(null as TaskData | null);
   const [currentNotes, setCurrentNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [monthYear, setMonthYear] = useState([
-    new Date().getMonth(),
-    new Date().getFullYear(),
-  ]);
 
-  const uncompletedTasks = props.unsortedTasks
-    .filter((task) => !task.isCompleted)
-    .sort(sortUncompletedTasks);
-  const completedTasks = props.unsortedTasks
-    .filter((task) => task.isCompleted)
-    .sort(sortCompletedTasks);
-  const uncompletedTasksForView = props.inArchive ? [] : uncompletedTasks;
-  const completedTasksForView = props.inArchive
-    ? completedTasks.filter((task) =>
-        isSecondsInMonth(task.completionTime, monthYear)
-      )
-    : completedTasks.slice(-1 * RECENTLY_COMPLETED_TASKS_TO_KEEP);
-  const tasks = temporaryTask
-    ? [...completedTasksForView, temporaryTask, ...uncompletedTasksForView]
-    : [...completedTasksForView, ...uncompletedTasksForView];
+  const sortedTasks = props.unsortedTasks.sort(sortTasks);
 
-  const [selectedId, setSelectedId] = useState(getIdealFirstTask(tasks));
+  const tasks = temporaryTask ? [temporaryTask, ...sortedTasks] : sortedTasks;
 
-  const selectedIndex = tasks.findIndex((task) => task.taskId === selectedId);
-  const selectedTask = selectedIndex >= 0 ? tasks[selectedIndex] : null;
+  const [selectedId, setSelectedId] = useState(
+    selectFirstTaskIfPossible(tasks)
+  );
 
-  const dividerPresent = completedTasks.length > 0;
-  const scrollAmount = selectedTask
-    ? -(
-        tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH +
-        (dividerPresent && !selectedTask.isCompleted
-          ? DIVIDER_HEIGHT_IN_VH
-          : 0) +
-        (props.inArchive ? MONTH_YEAR_TITLE_HEIGHT_IN_VH : 0)
-      )
-    : 0;
+  const selectedIndex = getTaskIndexIfPossible(tasks, selectedId);
+  const selectedTask = selectedIndex != null ? tasks[selectedIndex] : null;
+  const hasTaskSelected =
+    selectedId != null && selectedIndex != null && selectedTask != null;
+
+  const scrollAmount = -(
+    (props.monthPeriod ? MONTH_YEAR_TITLE_HEIGHT_IN_VH : 0) +
+    (selectedTask ? tasks.indexOf(selectedTask) * TASK_HEIGHT_IN_VH : 0)
+  );
 
   const navigateTasks = (direction: number) => {
-    if (selectedIndex === null) {
+    if (!hasTaskSelected) {
       return;
     }
     setSelectedId(
@@ -116,12 +101,13 @@ export default function Heap(props: HeapProps) {
   };
 
   const navigateAfterToggleCompletion = () => {
-    if (!selectedTask) {
+    if (!hasTaskSelected) {
       return;
     }
+    // Only move to next task if we are *completing* a task.
     if (!selectedTask.isCompleted) {
-      if (selectedId === uncompletedTasks[0].taskId) {
-        if (uncompletedTasks.length > 1) {
+      if (selectedId === tasks[0].taskId) {
+        if (tasks.length > 1) {
           navigateTasks(1);
         }
       } else {
@@ -130,33 +116,23 @@ export default function Heap(props: HeapProps) {
     }
   };
 
-  const jumpTo = (direction: Direction, absolute: boolean) => {
-    if (!selectedTask) {
+  const jumpTo = (direction: Direction) => {
+    if (tasks.length === 0) {
       return;
     }
-    if (absolute) {
-      setSelectedId(
-        tasks[direction === Direction.UP ? 0 : tasks.length - 1].taskId
-      );
-    } else {
-      const taskListOfInterest = selectedTask.isCompleted
-        ? completedTasks
-        : uncompletedTasks;
-      const index =
-        direction === Direction.UP ? 0 : taskListOfInterest.length - 1;
-      setSelectedId(taskListOfInterest[index].taskId);
-    }
+    setSelectedId(
+      tasks[direction === Direction.UP ? 0 : tasks.length - 1].taskId
+    );
   };
 
   const swapTask = (swapDirection: Direction) => {
-    if (!selectedTask || !selectedId) {
+    if (!hasTaskSelected) {
       return;
     }
     if (
-      (swapDirection === Direction.UP &&
-        selectedId === uncompletedTasks[0].taskId) ||
+      (swapDirection === Direction.UP && selectedId === tasks[0].taskId) ||
       (swapDirection === Direction.DOWN &&
-        selectedId === uncompletedTasks[uncompletedTasks.length - 1].taskId)
+        selectedId === tasks[tasks.length - 1].taskId)
     ) {
       return;
     }
@@ -169,27 +145,24 @@ export default function Heap(props: HeapProps) {
     editTaskInDatabase(otherTaskId, { sortingTime: selectedSortingTime });
   };
 
-  const completeTask = () => {
-    if (!selectedId || !selectedTask) {
+  const toggleCompletion = () => {
+    if (!hasTaskSelected) {
       return;
     }
+    const willBeCompleted = !selectedTask.isCompleted;
     const newTask: Partial<TaskData> = {
-      isCompleted: !selectedTask.isCompleted,
-      completionTime: selectedTask.isCompleted
-        ? selectedTask.completionTime
-        : getNowInSeconds(),
-      sortingTime: selectedTask.isCompleted
-        ? uncompletedTasks.length > 0
-          ? uncompletedTasks[0].sortingTime + 1
-          : getNowInSeconds()
-        : selectedTask.sortingTime,
+      isCompleted: willBeCompleted,
+      completionTime: willBeCompleted
+        ? getNowInSeconds()
+        : selectedTask.completionTime,
+      sortingTime: selectedTask.sortingTime,
     };
     navigateAfterToggleCompletion();
     editTaskInDatabase(selectedId, newTask);
   };
 
   const beginEditing = () => {
-    if (!selectedTask) {
+    if (!hasTaskSelected) {
       return;
     }
     setInEditMode(true);
@@ -197,7 +170,7 @@ export default function Heap(props: HeapProps) {
   };
 
   const finishEditing = () => {
-    if (!selectedTask || !selectedId) {
+    if (!hasTaskSelected) {
       return;
     }
     if (temporaryTask) {
@@ -206,8 +179,8 @@ export default function Heap(props: HeapProps) {
         taskText: currentText,
       };
       setTemporaryTask(null);
-      setSelectedId(temporaryTask.taskId);
-      addTaskToDatabase(temporaryTask.taskId, newTask);
+      setSelectedId(selectedId);
+      addTaskToDatabase(selectedId, newTask);
     } else {
       editTaskInDatabase(selectedId, {
         taskText: currentText,
@@ -225,9 +198,7 @@ export default function Heap(props: HeapProps) {
       isBlocked: false,
       creationTime: getNowInSeconds(),
       sortingTime:
-        uncompletedTasks.length > 0
-          ? uncompletedTasks[0].sortingTime + 1
-          : getNowInSeconds(),
+        tasks.length > 0 ? tasks[0].sortingTime + 1 : getNowInSeconds(),
       completionTime: null,
       taskId: new_id,
       notes: "",
@@ -237,42 +208,23 @@ export default function Heap(props: HeapProps) {
     setCurrentText("");
   };
 
-  const navigateAfterTaskDisappears = () => {
-    if (!selectedTask || tasks.length === 1) {
+  const navigateWhenTaskDisappears = () => {
+    if (!hasTaskSelected || tasks.length <= 1) {
       return;
     }
-    // If this is the very last task
     if (selectedIndex === tasks.length - 1) {
-      // As long as there's at least 2 tasks, there is one before it
       if (tasks.length > 1) {
         setSelectedId(tasks[selectedIndex - 1].taskId);
       }
-    }
-    // Not the last task
-    else {
-      // If this is the last completed task, but there's another completed task before it
-      if (
-        selectedTask.isCompleted &&
-        !tasks[selectedIndex + 1].isCompleted &&
-        completedTasks.length > 1
-      ) {
-        setSelectedId(tasks[selectedIndex - 1].taskId);
-      }
-      // In all other cases, move down (safe b/c it's not the last task)
-      else {
-        setSelectedId(tasks[selectedIndex + 1].taskId);
-      }
+    } else {
+      setSelectedId(tasks[selectedIndex + 1].taskId);
     }
   };
 
   const cancelEditOrCreate = () => {
     if (temporaryTask) {
       setTemporaryTask(null);
-      if (uncompletedTasks.length > 0) {
-        setSelectedId(uncompletedTasks[0].taskId);
-      } else if (completedTasks && completedTasks.length > 0) {
-        setSelectedId(completedTasks[completedTasks.length - 1].taskId);
-      }
+      setSelectedId(selectFirstTaskIfPossible(tasks));
     }
     setInEditMode(false);
     setCurrentText("");
@@ -281,15 +233,15 @@ export default function Heap(props: HeapProps) {
   };
 
   const deleteTask = () => {
-    if (!selectedId) {
+    if (!hasTaskSelected) {
       return;
     }
-    navigateAfterTaskDisappears();
+    navigateWhenTaskDisappears();
     deleteTaskFromDatabase(selectedId);
   };
 
   const beginEditingNotes = () => {
-    if (!selectedTask) {
+    if (!hasTaskSelected) {
       return;
     }
     props.setShowDetails(true);
@@ -298,7 +250,7 @@ export default function Heap(props: HeapProps) {
   };
 
   const finishEditingNotes = () => {
-    if (!selectedId || !selectedTask) {
+    if (!hasTaskSelected) {
       return;
     }
     editTaskInDatabase(selectedId, { notes: currentNotes });
@@ -307,10 +259,12 @@ export default function Heap(props: HeapProps) {
   };
 
   const toggleTaskBlocked = () => {
-    if (!selectedId || !selectedTask) {
+    if (!hasTaskSelected) {
       return;
     }
-    editTaskInDatabase(selectedId, { isBlocked: !selectedTask.isBlocked });
+    editTaskInDatabase(selectedId, {
+      isBlocked: !selectedTask.isBlocked,
+    });
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -318,58 +272,52 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: { key: "k" },
       callback: () => navigateTasks(-1),
+      allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: { key: "j" },
       callback: () => navigateTasks(1),
+      allowWhen: hasTaskSelected,
     },
     {
-      keyboardEvent: { key: "[" },
-      callback: () => jumpTo(Direction.DOWN, false),
+      keyboardEvent: { key: "w" },
+      callback: () => jumpTo(Direction.UP),
     },
     {
-      keyboardEvent: { key: "]" },
-      callback: () => jumpTo(Direction.UP, false),
-    },
-    {
-      keyboardEvent: { key: "{" },
-      callback: () => jumpTo(Direction.DOWN, true),
-    },
-    {
-      keyboardEvent: { key: "}" },
-      callback: () => jumpTo(Direction.UP, true),
+      keyboardEvent: { key: "s" },
+      callback: () => jumpTo(Direction.DOWN),
     },
     {
       keyboardEvent: { key: " " },
-      callback: completeTask,
+      callback: toggleCompletion,
+      allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: { key: "J" },
       callback: () => swapTask(Direction.DOWN),
-      allowWhen: !props.inArchive && selectedTask && !selectedTask.isCompleted,
+      allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: { key: "K" },
       callback: () => swapTask(Direction.UP),
-      allowWhen: !props.inArchive && selectedTask && !selectedTask.isCompleted,
+      allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "t" }],
       callback: beginEditing,
-      allowWhen: !inEditMode && !isEditingNotes,
+      allowWhen: !inEditMode && !isEditingNotes && hasTaskSelected,
       preventDefault: true,
     },
     {
       keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditing,
-      allowWhen: inEditMode && currentText.length > 0,
+      allowWhen: inEditMode && currentText.length > 0 && hasTaskSelected,
       allowOnTextInput: true,
     },
     {
       keyboardEvent: { key: "a" },
       callback: addTask,
       preventDefault: true,
-      allowWhen: !props.inArchive,
     },
     {
       keyboardEvent: { key: "Escape" },
@@ -379,6 +327,7 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: [{ key: "d" }, { key: "d" }],
       callback: deleteTask,
+      allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: { key: "q" },
@@ -387,35 +336,39 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: [{ key: "e" }, { key: "n" }],
       callback: beginEditingNotes,
-      allowWhen: !isEditingNotes,
+      allowWhen: !isEditingNotes && hasTaskSelected,
       preventDefault: true,
     },
     {
       keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditingNotes,
-      allowWhen: isEditingNotes,
+      allowWhen: isEditingNotes && hasTaskSelected,
       allowOnTextInput: true,
     },
     {
       keyboardEvent: { key: "m" },
-      callback: () => setMonthYear(nextMonth(monthYear)),
-      allowWhen: props.inArchive,
+      callback: () => props.setMonthPeriod(addMonths(props.monthPeriod, 1)),
+      allowWhen: Boolean(props.monthPeriod),
     },
     {
       keyboardEvent: { key: "M" },
-      callback: () => setMonthYear(previousMonth(monthYear)),
-      allowWhen: props.inArchive,
+      callback: () => props.setMonthPeriod(addMonths(props.monthPeriod, -1)),
+      allowWhen: Boolean(props.monthPeriod),
     },
     {
       keyboardEvent: { key: "." },
-      callback: () =>
-        setMonthYear([new Date().getMonth(), new Date().getFullYear()]),
-      allowWhen: props.inArchive,
+      callback: () => props.setMonthPeriod(currentMonthPeriod()),
+      allowWhen: Boolean(props.monthPeriod),
     },
     {
       keyboardEvent: { key: "@" },
       callback: toggleTaskBlocked,
-      allowWhen: selectedTask && !selectedTask.isCompleted,
+      allowWhen: hasTaskSelected && !selectedTask.isCompleted,
+    },
+    {
+      keyboardEvent: { key: "," },
+      callback: () =>
+        props.setMonthPeriod(props.monthPeriod ? null : currentMonthPeriod()),
     },
   ];
 
@@ -440,9 +393,9 @@ export default function Heap(props: HeapProps) {
       <div className={styles.taskContainer}>
         <VerticallyCenteredList scrollAmount={`${scrollAmount}vh`}>
           <>
-            {props.inArchive && (
+            {props.monthPeriod && (
               <div className={styles.monthDisplay}>
-                {formatMonthYear(monthYear)}
+                {formatMonthYear(props.monthPeriod)}
               </div>
             )}
             <TaskList

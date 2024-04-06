@@ -12,7 +12,7 @@ import { documentToTaskData, heapCollection } from "@/firebase/heap-service";
 import { TypedKey } from "react-keyboard-control";
 import KeypressDisplay from "@/components/KeypressDisplay";
 import styles from "./page.module.css";
-import HeapProvider from "@/components/HeapProvider";
+import HeapProvider from "@/components/heap/HeapProvider";
 import HabitTracker from "@/components/HabitTracker";
 import {
   documentToHabitTrackerDate,
@@ -29,7 +29,7 @@ export default function page() {
     useCollection(habitTrackerCollection);
   const [habitDefinitionsDocs, habitDefinitionsLoading, habitDefinitionsError] =
     useCollection(habitDefinitionsCollection);
-  const [view, setView] = useState(View.HABIT_TRACKER);
+  const [view, setView] = useState(View.HEAP_HOME);
   const [currentSequence, setCurrentSequence] = useState([] as TypedKey[]);
   const heapTasks: TaskData[] = heapDocs
     ? heapDocs.docs.map(documentToTaskData)
@@ -51,24 +51,17 @@ export default function page() {
       callback: () => setView(View.HEAP_HOME),
     },
     {
-      keyboardEvent: [{ key: "h" }, { key: "a" }],
-      callback: () => setView(View.HEAP_ARCHIVE),
-    },
-    {
       keyboardEvent: [{ key: "t" }, { key: "t" }],
       callback: () => setView(View.HABIT_TRACKER),
     },
   ];
 
-  const isHeapView = view === View.HEAP_ARCHIVE || view === View.HEAP_HOME;
-
   return (
     <>
-      {isHeapView ? (
+      {view === View.HEAP_HOME ? (
         heapReady && (
           <HeapProvider
             unsortedTasks={heapTasks}
-            view={view}
             setCurrentSequence={setCurrentSequence}
             viewKeyhooks={viewKeyhooks}
           />

@@ -38,8 +38,14 @@ export interface HabitDefinition {
   habitScbedule: string;
 }
 
+interface MonthPeriod {
+  month: number;
+  year: number;
+}
+
+export type MaybeMonthPeriod = MonthPeriod | null;
+
 export const enum View {
   HEAP_HOME,
-  HEAP_ARCHIVE,
   HABIT_TRACKER,
 }

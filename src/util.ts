@@ -1,4 +1,4 @@
-import { EpochSeconds } from "./interfaces/Interfaces";
+import { EpochSeconds, MaybeMonthPeriod } from "./interfaces/Interfaces";
 
 const MONTH_NAMES = [
   "jan",
@@ -43,23 +43,40 @@ const formatMillisToMonthYear = (s: EpochSeconds) =>
     })
     .toLocaleLowerCase();
 
-const previousMonth = (monthYear: number[]): number[] => [
-  mod(monthYear[0] - 1, 12),
-  monthYear[0] === 0 ? monthYear[1] - 1 : monthYear[1],
-];
+const currentMonthPeriod = (): MaybeMonthPeriod => {
+  return {
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+  };
+};
 
-const nextMonth = (monthYear: number[]): number[] => [
-  mod(monthYear[0] + 1, 12),
-  monthYear[0] === 11 ? monthYear[1] + 1 : monthYear[1],
-];
+const addMonths = (
+  maybeMonthPeriod: MaybeMonthPeriod,
+  n_months: number
+): MaybeMonthPeriod => {
+  if (!maybeMonthPeriod) {
+    return null;
+  } else {
+    return {
+      month: mod(maybeMonthPeriod.month + n_months, 12),
+      year: Math.floor(
+        (maybeMonthPeriod.year * 12 + maybeMonthPeriod.month + n_months) / 12
+      ),
+    };
+  }
+};
 
-const isSecondsInMonth = (s: EpochSeconds | null, monthYear: number[]) =>
+const isSecondsInMonth = (
+  s: EpochSeconds | null,
+  monthYear: MaybeMonthPeriod
+) =>
   s &&
-  new Date(s * 1000).getMonth() === monthYear[0] &&
-  new Date(s * 1000).getFullYear() === monthYear[1];
+  monthYear &&
+  new Date(s * 1000).getMonth() === monthYear.month &&
+  new Date(s * 1000).getFullYear() === monthYear.year;
 
-const formatMonthYear = (monthYear: number[]) =>
-  `${MONTH_NAMES[monthYear[0]]} ${monthYear[1]}`;
+const formatMonthYear = (monthYear: MaybeMonthPeriod) =>
+  monthYear ? `${MONTH_NAMES[monthYear.month]} ${monthYear.year}` : "";
 
 const getNowInSeconds = (): number => Math.floor(Date.now() / 1000);
 
@@ -94,8 +111,6 @@ export {
   clip,
   formatMillisToLocaleDate,
   formatMillisToMonthYear,
-  previousMonth,
-  nextMonth,
   isSecondsInMonth,
   formatMonthYear,
   getNowInSeconds,
@@ -103,4 +118,6 @@ export {
   addDays,
   getDateRange,
   formatDateToLocaleDate,
+  addMonths,
+  currentMonthPeriod,
 };

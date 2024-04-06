@@ -1,12 +1,12 @@
 import React from "react";
 import styles from "./DetailPanel.module.css";
-import { EpochMillis } from "@/interfaces/Interfaces";
+import { EpochSeconds } from "@/interfaces/Interfaces";
 import { classnames, formatMillisToLocaleDate } from "@/util";
 import ReactTextareaAutosize from "react-textarea-autosize";
 
 interface DetailPanelProps {
-  creationTime: EpochMillis;
-  completionTime: EpochMillis | null;
+  creationTime: EpochSeconds;
+  completionTime: EpochSeconds | null;
   notes: string;
   currentNotes: string;
   setCurrentNotes: (notes: string) => void;
@@ -46,7 +46,6 @@ export default function DetailPanel(props: DetailPanelProps) {
             value={props.currentNotes}
             onChange={(e) => {
               props.setCurrentNotes(e.target.value);
-              console.log("here", e.target.value);
             }}
             spellCheck={false}
             onBlur={props.cancel}

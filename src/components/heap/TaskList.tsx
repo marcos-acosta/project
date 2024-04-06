@@ -34,7 +34,7 @@ export default function TaskList(props: TaskListProps) {
         />
       ))}
       {props.tasks.length === 0 && (
-        <div className={styles.noTasks}>no tasks to show</div>
+        <div className={styles.noTasks}>(no tasks to show)</div>
       )}
     </div>
   );
