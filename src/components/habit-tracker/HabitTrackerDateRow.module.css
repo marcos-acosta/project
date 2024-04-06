@@ -1,0 +1,50 @@
+.selected {
+  background-color: #fff2ccff;
+}
+
+.trackerCellContainer {
+  width: 3.5vw;
+  height: 3.5vw;
+  /* border: 1px solid red; */
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.trackerCell {
+  width: 3vw;
+  height: 3vw;
+  border-radius: 0.5vw;
+  display: inline-block;
+}
+
+.trackerCell.completed {
+  background-color: #93c47dff;
+}
+
+.trackerCell.kindaCompleted {
+  background-color: #ffd966ff;
+}
+
+.trackerCell.notCompleted {
+  background-color: #e06666ff;
+}
+
+.trackerCell.tbd {
+  background-color: #434343ff;
+}
+
+.trackerCell.notApplicable {
+  background-color: #d9d9d9ff;
+}
+
+.trackerCell.ignored {
+  background-color: transparent;
+}
+
+.dateCell {
+  text-align: right;
+  padding-top: 0.5vw;
+  padding-bottom: 0.5vw;
+  padding-left: 1vw;
+  padding-right: 2vw;
+}

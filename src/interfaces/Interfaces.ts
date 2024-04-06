@@ -49,3 +49,21 @@ export const enum View {
   HEAP_HOME,
   HABIT_TRACKER,
 }
+
+export enum UpDownDirection {
+  UP,
+  DOWN,
+}
+
+export enum LeftRightDirection {
+  LEFT,
+  RIGHT,
+}
+
+export enum TrackerValue {
+  YES = "Y",
+  NO = "N",
+  KINDA = "K",
+  NOT_APPLICABLE = "N/A",
+  UNKNOWN = "?",
+}

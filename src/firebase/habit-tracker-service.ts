@@ -1,4 +1,9 @@
-import { QueryDocumentSnapshot } from "firebase/firestore";
+import {
+  QueryDocumentSnapshot,
+  doc,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { collection, getDocs } from "firebase/firestore";
 import { HabitTrackerDate, TaskData } from "@/interfaces/Interfaces";
 import { USER_ID_REMOVE_THIS, firestore_db } from "./firebase";
@@ -27,8 +32,27 @@ const getAllHabitTrackerDates = async (): Promise<HabitTrackerDate[]> => {
   );
 };
 
+const updateTrackerInDatabase = async (
+  date: string,
+  habitId: string,
+  value: string
+) => {
+  try {
+    await setDoc(
+      doc(habitTrackerCollection, date),
+      {
+        habit_log: { [habitId]: value },
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Error editing document: ", e);
+  }
+};
+
 export {
   habitTrackerCollection,
   getAllHabitTrackerDates,
   documentToHabitTrackerDate,
+  updateTrackerInDatabase,
 };

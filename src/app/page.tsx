@@ -13,7 +13,7 @@ import { TypedKey } from "react-keyboard-control";
 import KeypressDisplay from "@/components/KeypressDisplay";
 import styles from "./page.module.css";
 import HeapProvider from "@/components/heap/HeapProvider";
-import HabitTracker from "@/components/HabitTracker";
+import HabitTracker from "@/components/habit-tracker/HabitTracker";
 import {
   documentToHabitTrackerDate,
   habitTrackerCollection,
@@ -29,7 +29,7 @@ export default function page() {
     useCollection(habitTrackerCollection);
   const [habitDefinitionsDocs, habitDefinitionsLoading, habitDefinitionsError] =
     useCollection(habitDefinitionsCollection);
-  const [view, setView] = useState(View.HEAP_HOME);
+  const [view, setView] = useState(View.HABIT_TRACKER);
   const [currentSequence, setCurrentSequence] = useState([] as TypedKey[]);
   const heapTasks: TaskData[] = heapDocs
     ? heapDocs.docs.map(documentToTaskData)
@@ -61,9 +61,9 @@ export default function page() {
       {view === View.HEAP_HOME ? (
         heapReady && (
           <HeapProvider
-            unsortedTasks={heapTasks}
             setCurrentSequence={setCurrentSequence}
             viewKeyhooks={viewKeyhooks}
+            unsortedTasks={heapTasks}
           />
         )
       ) : view === View.HABIT_TRACKER ? (

@@ -1,4 +1,8 @@
-import { EpochSeconds, MaybeMonthPeriod } from "./interfaces/Interfaces";
+import {
+  EpochSeconds,
+  MaybeMonthPeriod,
+  TrackerValue,
+} from "./interfaces/Interfaces";
 
 const MONTH_NAMES = [
   "jan",
@@ -105,6 +109,21 @@ const getDateRange = (selectedDate: Date, maxNumDays: number) => {
     .filter((date) => date <= new Date());
 };
 
+const stringToTrackerValue = (v: string) => {
+  switch (v) {
+    case "Y":
+      return TrackerValue.YES;
+    case "K":
+      return TrackerValue.KINDA;
+    case "N":
+      return TrackerValue.NO;
+    case "N/A":
+      return TrackerValue.NOT_APPLICABLE;
+    default:
+      return TrackerValue.UNKNOWN;
+  }
+};
+
 export {
   mod,
   classnames,
@@ -120,4 +139,5 @@ export {
   formatDateToLocaleDate,
   addMonths,
   currentMonthPeriod,
+  stringToTrackerValue,
 };

@@ -1,5 +1,10 @@
 import styles from "./Heap.module.css";
-import { MaybeMonthPeriod, TaskData, View } from "@/interfaces/Interfaces";
+import {
+  MaybeMonthPeriod,
+  TaskData,
+  UpDownDirection,
+  View,
+} from "@/interfaces/Interfaces";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/heap/TaskList";
 import { useEffect, useState } from "react";
@@ -24,11 +29,6 @@ import {
 
 const TASK_HEIGHT_IN_VH = 6;
 const MONTH_YEAR_TITLE_HEIGHT_IN_VH = 6;
-
-enum Direction {
-  UP,
-  DOWN,
-}
 
 const sortUncompletedTasks = (a: TaskData, b: TaskData) =>
   b.sortingTime - a.sortingTime;
@@ -116,27 +116,28 @@ export default function Heap(props: HeapProps) {
     }
   };
 
-  const jumpTo = (direction: Direction) => {
+  const jumpTo = (direction: UpDownDirection) => {
     if (tasks.length === 0) {
       return;
     }
     setSelectedId(
-      tasks[direction === Direction.UP ? 0 : tasks.length - 1].taskId
+      tasks[direction === UpDownDirection.UP ? 0 : tasks.length - 1].taskId
     );
   };
 
-  const swapTask = (swapDirection: Direction) => {
+  const swapTask = (swapDirection: UpDownDirection) => {
     if (!hasTaskSelected) {
       return;
     }
     if (
-      (swapDirection === Direction.UP && selectedId === tasks[0].taskId) ||
-      (swapDirection === Direction.DOWN &&
+      (swapDirection === UpDownDirection.UP &&
+        selectedId === tasks[0].taskId) ||
+      (swapDirection === UpDownDirection.DOWN &&
         selectedId === tasks[tasks.length - 1].taskId)
     ) {
       return;
     }
-    const indexDifference = swapDirection === Direction.UP ? -1 : 1;
+    const indexDifference = swapDirection === UpDownDirection.UP ? -1 : 1;
     const otherTask = tasks[selectedIndex + indexDifference];
     const selectedSortingTime = selectedTask.sortingTime;
     const otherTaskId = otherTask.taskId;
@@ -281,11 +282,11 @@ export default function Heap(props: HeapProps) {
     },
     {
       keyboardEvent: { key: "w" },
-      callback: () => jumpTo(Direction.UP),
+      callback: () => jumpTo(UpDownDirection.UP),
     },
     {
       keyboardEvent: { key: "s" },
-      callback: () => jumpTo(Direction.DOWN),
+      callback: () => jumpTo(UpDownDirection.DOWN),
     },
     {
       keyboardEvent: { key: " " },
@@ -294,12 +295,12 @@ export default function Heap(props: HeapProps) {
     },
     {
       keyboardEvent: { key: "J" },
-      callback: () => swapTask(Direction.DOWN),
+      callback: () => swapTask(UpDownDirection.DOWN),
       allowWhen: hasTaskSelected,
     },
     {
       keyboardEvent: { key: "K" },
-      callback: () => swapTask(Direction.UP),
+      callback: () => swapTask(UpDownDirection.UP),
       allowWhen: hasTaskSelected,
     },
     {

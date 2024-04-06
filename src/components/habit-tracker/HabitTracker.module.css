@@ -1,0 +1,27 @@
+.habitTrackerTable {
+  font-size: 1.7vw;
+  border-collapse: collapse;
+}
+
+.habitTrackerContainer {
+  display: flex;
+  width: 100vw;
+  justify-content: center;
+  margin-top: 12vh;
+}
+
+.habitName {
+  padding-bottom: 1vw;
+  padding-top: 1vw;
+  vertical-align: bottom;
+  text-align: center;
+}
+
+.habitNameText {
+  writing-mode: vertical-rl;
+  display: inline-block;
+}
+
+.selected {
+  background-color: #fff2ccff;
+}
