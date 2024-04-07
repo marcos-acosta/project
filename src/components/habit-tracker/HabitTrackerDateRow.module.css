@@ -5,16 +5,30 @@
 .trackerCellContainer {
   width: 3.5vw;
   height: 3.5vw;
-  /* border: 1px solid red; */
-  text-align: center;
-  vertical-align: bottom;
+  position: relative;
+}
+
+.trackerCellContainer.bottomCornersRounded {
+  border-bottom-left-radius: 0.75vw;
+  border-bottom-right-radius: 0.75vw;
+}
+
+.trackerCellContainer.rightCornersRounded {
+  border-bottom-right-radius: 0.75vw;
+  border-top-right-radius: 0.75vw;
+}
+
+.trackerCellContainer.bottomRightCornerRounded {
+  border-bottom-right-radius: 0.75vw;
 }
 
 .trackerCell {
-  width: 3vw;
-  height: 3vw;
+  width: 2.75vw;
+  height: 2.75vw;
   border-radius: 0.5vw;
-  display: inline-block;
+  position: absolute;
+  left: 0.375vw;
+  top: 0.375vw;
 }
 
 .trackerCell.completed {
@@ -47,4 +61,12 @@
   padding-bottom: 0.5vw;
   padding-left: 1vw;
   padding-right: 2vw;
+  border-top-left-radius: 0.75vw;
+  border-bottom-left-radius: 0.75vw;
+  font-style: italic;
+  color: #cccccc;
+}
+
+.dateCell.selected {
+  color: black;
 }

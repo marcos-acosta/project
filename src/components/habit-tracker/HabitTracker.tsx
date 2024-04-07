@@ -156,21 +156,28 @@ export default function HabitTracker(props: HabitTrackerProps) {
               <td />
               {props.habitDefinitions.map((definition) => (
                 <td
-                  className={classnames(
-                    styles.habitName,
-                    definition.habitId === selectedHabitId && styles.selected
-                  )}
                   key={`header-${definition.habitId}`}
+                  className={styles.trackerHeader}
                 >
-                  <div className={styles.habitNameText}>
-                    {definition.habitName}
+                  <div
+                    className={classnames(
+                      styles.habitName,
+                      definition.habitId === selectedHabitId && styles.selected,
+                      selectedHabitId &&
+                        definition.habitId !== selectedHabitId &&
+                        styles.grayedOut
+                    )}
+                  >
+                    <div className={styles.habitNameText}>
+                      {definition.habitName}
+                    </div>
                   </div>
                 </td>
               ))}
             </tr>
           </thead>
           <tbody>
-            {dateRange.map((date) => (
+            {dateRange.map((date, i) => (
               <HabitTrackerDateRow
                 dateString={formatDateToLocaleDate(date, false)}
                 dateIso={formatDateToIso(date)}
@@ -179,6 +186,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
                 habitDates={props.habitDates}
                 selectedHabitId={selectedHabitId}
                 key={formatDateToIso(date)}
+                isLastRow={i === dateRange.length - 1}
               />
             ))}
           </tbody>

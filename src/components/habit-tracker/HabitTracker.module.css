@@ -7,14 +7,23 @@
   display: flex;
   width: 100vw;
   justify-content: center;
-  margin-top: 12vh;
+  margin-top: 8vh;
+}
+
+.trackerHeader {
+  vertical-align: bottom;
 }
 
 .habitName {
+  text-align: center;
+  border-top-right-radius: 0.75vw;
+  border-top-left-radius: 0.75vw;
   padding-bottom: 1vw;
   padding-top: 1vw;
-  vertical-align: bottom;
-  text-align: center;
+}
+
+.habitName.grayedOut {
+  color: #cccccc;
 }
 
 .habitNameText {
