@@ -1,4 +1,4 @@
-import { classnames } from "@/util";
+import { classnames, habitScheduleIncludesDateIso } from "@/util";
 import React from "react";
 import styles from "./HabitTrackerDateRow.module.css";
 import { HabitDefinition, HabitTrackerDate } from "@/interfaces/Interfaces";
@@ -20,9 +20,19 @@ const TRACKER_VALUE_TO_CLASSNAME: { [key: string]: string } = {
   "N/A": styles.notApplicable,
 };
 
-const getClassnameFromTrackerValue = (v: string | undefined) =>
-  v && Object.hasOwn(TRACKER_VALUE_TO_CLASSNAME, v)
-    ? TRACKER_VALUE_TO_CLASSNAME[v]
+const getColorFromTrackerValue = (
+  trackerDate: HabitTrackerDate | undefined,
+  habitDefinition: HabitDefinition,
+  dateIso: string
+) =>
+  !habitScheduleIncludesDateIso(habitDefinition.habitSchedule, dateIso)
+    ? styles.ignored
+    : trackerDate &&
+      Object.hasOwn(
+        TRACKER_VALUE_TO_CLASSNAME,
+        trackerDate.habitLog[habitDefinition.habitId]
+      )
+    ? TRACKER_VALUE_TO_CLASSNAME[trackerDate.habitLog[habitDefinition.habitId]]
     : styles.tbd;
 
 const getBorderStyles = (
@@ -81,9 +91,10 @@ export default function HabitTrackerDateRow(props: HabitTrackerDateRowProps) {
             <div
               className={classnames(
                 styles.trackerCell,
-                getClassnameFromTrackerValue(
-                  selectedDateData &&
-                    selectedDateData.habitLog[definition.habitId]
+                getColorFromTrackerValue(
+                  selectedDateData,
+                  definition,
+                  props.dateIso
                 )
               )}
             ></div>

@@ -46,10 +46,13 @@ export default function HabitTracker(props: HabitTrackerProps) {
   const [selectedHabitId, setSelectedHabitId] = useState(null as string | null);
   const [isInInputMode, setIsInInputMode] = useState(false);
 
+  const habitDefinitions = props.habitDefinitions.sort(
+    (a, b) => a.orderValue - b.orderValue
+  );
   const selectedDateIso = formatDateToIso(selectedDate);
   const dateRange = getDateRange(selectedDate, 14);
   const selectedHabitIndex = getHabitIndexIfPossible(
-    props.habitDefinitions,
+    habitDefinitions,
     selectedHabitId
   );
   const hasHabitSelected =
@@ -57,7 +60,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
 
   const toggleInputMode = () => {
     if (!isInInputMode) {
-      setSelectedHabitId(selectFirstHabitIfPossible(props.habitDefinitions));
+      setSelectedHabitId(selectFirstHabitIfPossible(habitDefinitions));
     } else {
       setSelectedHabitId(null);
     }
@@ -70,15 +73,11 @@ export default function HabitTracker(props: HabitTrackerProps) {
     }
     if (direction === LeftRightDirection.LEFT) {
       if (selectedHabitIndex !== 0) {
-        setSelectedHabitId(
-          props.habitDefinitions[selectedHabitIndex - 1].habitId
-        );
+        setSelectedHabitId(habitDefinitions[selectedHabitIndex - 1].habitId);
       }
     } else {
-      if (selectedHabitIndex !== props.habitDefinitions.length - 1) {
-        setSelectedHabitId(
-          props.habitDefinitions[selectedHabitIndex + 1].habitId
-        );
+      if (selectedHabitIndex !== habitDefinitions.length - 1) {
+        setSelectedHabitId(habitDefinitions[selectedHabitIndex + 1].habitId);
       }
     }
   };
@@ -154,7 +153,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
           <thead>
             <tr>
               <td />
-              {props.habitDefinitions.map((definition) => (
+              {habitDefinitions.map((definition) => (
                 <td
                   key={`header-${definition.habitId}`}
                   className={styles.trackerHeader}
@@ -182,7 +181,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
                 dateString={formatDateToLocaleDate(date, false)}
                 dateIso={formatDateToIso(date)}
                 isRowSelected={formatDateToIso(date) === selectedDateIso}
-                habitDefinitions={props.habitDefinitions}
+                habitDefinitions={habitDefinitions}
                 habitDates={props.habitDates}
                 selectedHabitId={selectedHabitId}
                 key={formatDateToIso(date)}

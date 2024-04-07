@@ -27,7 +27,7 @@
 }
 
 .habitNameText {
-  writing-mode: vertical-rl;
+  writing-mode: sideways-rl;
   display: inline-block;
 }
 

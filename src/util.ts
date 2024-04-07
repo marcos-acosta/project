@@ -1,5 +1,6 @@
 import {
   EpochSeconds,
+  HabitDefinition,
   MaybeMonthPeriod,
   TrackerValue,
 } from "./interfaces/Interfaces";
@@ -124,6 +125,13 @@ const stringToTrackerValue = (v: string) => {
   }
 };
 
+const DAYS_OF_WEEK = "umtwrfs";
+
+const habitScheduleIncludesDateIso = (schedule: string, dateIso: string) => {
+  const dayOfWeek = DAYS_OF_WEEK[new Date(dateIso).getDay()];
+  return schedule.includes(dayOfWeek);
+};
+
 export {
   mod,
   classnames,
@@ -140,4 +148,5 @@ export {
   addMonths,
   currentMonthPeriod,
   stringToTrackerValue,
+  habitScheduleIncludesDateIso,
 };

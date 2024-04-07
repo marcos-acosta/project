@@ -18,7 +18,8 @@ const documentToHabitDefinition = (
     habitId: doc.id,
     habitName: docData.habit_name,
     habitDescription: docData.habit_description,
-    habitScbedule: docData.habit_schedule,
+    habitSchedule: docData.habit_schedule,
+    orderValue: docData.order_value,
   };
 };
 

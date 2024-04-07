@@ -35,7 +35,8 @@ export interface HabitDefinition {
   habitId: string;
   habitName: string;
   habitDescription: string;
-  habitScbedule: string;
+  habitSchedule: string;
+  orderValue: number;
 }
 
 interface MonthPeriod {
