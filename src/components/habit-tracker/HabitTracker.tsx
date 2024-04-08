@@ -11,6 +11,7 @@ import {
   formatDateToLocaleDate,
   getDateRange,
   getNDaysUpToSelectedDate,
+  habitScheduleIncludesDateIso,
 } from "@/util";
 import React, { useEffect, useState } from "react";
 import useKeyboardControl, {
@@ -69,27 +70,32 @@ export default function HabitTracker(props: HabitTrackerProps) {
     setIsInInputMode(!isInInputMode);
   };
 
-  const scrollHabits = (direction: LeftRightDirection) => {
+  const scrollHabits = (
+    direction: LeftRightDirection,
+    selectedDate: string
+  ) => {
     if (!hasHabitSelected) {
       return;
     }
-    if (direction === LeftRightDirection.LEFT) {
-      if (selectedHabitIndex !== 0) {
-        setSelectedHabitId(habitDefinitions[selectedHabitIndex - 1].habitId);
-      }
-    } else {
-      if (selectedHabitIndex !== habitDefinitions.length - 1) {
-        setSelectedHabitId(habitDefinitions[selectedHabitIndex + 1].habitId);
-      }
+    const habitsToSearch =
+      direction === LeftRightDirection.LEFT
+        ? habitDefinitions.slice(0, selectedHabitIndex).reverse()
+        : habitDefinitions.slice(selectedHabitIndex + 1);
+    console.log(habitsToSearch);
+    const nextHabit = habitsToSearch.find((definition) =>
+      habitScheduleIncludesDateIso(definition.habitSchedule, selectedDate)
+    );
+    if (nextHabit) {
+      setSelectedHabitId(nextHabit.habitId);
     }
   };
 
-  const updateTracker = (trackerValue: TrackerValue) => {
+  const updateTracker = (trackerValue: TrackerValue, selectedDate: string) => {
     if (!hasHabitSelected) {
       return;
     }
     updateTrackerInDatabase(selectedDateIso, selectedHabitId, trackerValue);
-    scrollHabits(LeftRightDirection.RIGHT);
+    scrollHabits(LeftRightDirection.RIGHT, selectedDate);
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -112,32 +118,33 @@ export default function HabitTracker(props: HabitTrackerProps) {
     },
     {
       keyboardEvent: { key: "h" },
-      callback: () => scrollHabits(LeftRightDirection.LEFT),
+      callback: () => scrollHabits(LeftRightDirection.LEFT, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "l" },
-      callback: () => scrollHabits(LeftRightDirection.RIGHT),
+      callback: () => scrollHabits(LeftRightDirection.RIGHT, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "y" },
-      callback: () => updateTracker(TrackerValue.YES),
+      callback: () => updateTracker(TrackerValue.YES, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "n" },
-      callback: () => updateTracker(TrackerValue.NO),
+      callback: () => updateTracker(TrackerValue.NO, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "k" },
-      callback: () => updateTracker(TrackerValue.KINDA),
+      callback: () => updateTracker(TrackerValue.KINDA, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "?" },
-      callback: () => updateTracker(TrackerValue.NOT_APPLICABLE),
+      callback: () =>
+        updateTracker(TrackerValue.NOT_APPLICABLE, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
