@@ -1,0 +1,19 @@
+.habitDefinitionBoxContainer {
+  background-color: #f6f6f6ff;
+  border-radius: 0.75vw;
+  padding: 1vw;
+  font-size: 1.5vw;
+  position: absolute;
+  font-style: italic;
+  width: 20vw;
+}
+
+.habitSchedule {
+  background-color: #d9d9d9ff;
+  border-radius: 0.4vw;
+  padding: 0.25vw;
+  padding-left: 0.75vw;
+  padding-right: 0.75vw;
+  margin-top: 1.25vw;
+  display: inline-block;
+}

@@ -70,3 +70,11 @@
 .dateCell.selected {
   color: black;
 }
+
+.trackerTableCell {
+  position: relative;
+}
+
+.descriptionContainer {
+  transform: translateY(1vw);
+}

@@ -10,6 +10,7 @@ import {
   formatDateToIso,
   formatDateToLocaleDate,
   getDateRange,
+  getNDaysUpToSelectedDate,
 } from "@/util";
 import React, { useEffect, useState } from "react";
 import useKeyboardControl, {
@@ -19,6 +20,7 @@ import useKeyboardControl, {
 import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
 import { updateTrackerInDatabase } from "@/firebase/habit-tracker-service";
+import HabitDescriptionBox from "./HabitDescriptionBox";
 
 interface HabitTrackerProps {
   viewKeyhooks: KeyboardHook[];
@@ -50,7 +52,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
     (a, b) => a.orderValue - b.orderValue
   );
   const selectedDateIso = formatDateToIso(selectedDate);
-  const dateRange = getDateRange(selectedDate, 14);
+  const dateRange = getNDaysUpToSelectedDate(selectedDate, 7);
   const selectedHabitIndex = getHabitIndexIfPossible(
     habitDefinitions,
     selectedHabitId
@@ -137,6 +139,21 @@ export default function HabitTracker(props: HabitTrackerProps) {
       keyboardEvent: { key: "?" },
       callback: () => updateTracker(TrackerValue.NOT_APPLICABLE),
       allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "." },
+      callback: () => setSelectedDate(new Date()),
+      allowWhen: !isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "w" },
+      callback: () => setSelectedDate(addDays(selectedDate, 7)),
+      allowWhen: !isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "W" },
+      callback: () => setSelectedDate(addDays(selectedDate, -7)),
+      allowWhen: !isInInputMode,
     },
   ];
 

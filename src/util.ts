@@ -110,6 +110,12 @@ const getDateRange = (selectedDate: Date, maxNumDays: number) => {
     .filter((date) => date <= new Date());
 };
 
+const getNDaysUpToSelectedDate = (selectedDate: Date, numDays: number) => {
+  return arrayRange(-numDays + 1, 0, 1).map((offset) =>
+    addDays(selectedDate, offset)
+  );
+};
+
 const stringToTrackerValue = (v: string) => {
   switch (v) {
     case "Y":
@@ -149,4 +155,5 @@ export {
   currentMonthPeriod,
   stringToTrackerValue,
   habitScheduleIncludesDateIso,
+  getNDaysUpToSelectedDate,
 };

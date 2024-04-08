@@ -2,6 +2,7 @@ import { classnames, habitScheduleIncludesDateIso } from "@/util";
 import React from "react";
 import styles from "./HabitTrackerDateRow.module.css";
 import { HabitDefinition, HabitTrackerDate } from "@/interfaces/Interfaces";
+import HabitDescriptionBox from "./HabitDescriptionBox";
 
 export interface HabitTrackerDateRowProps {
   dateString: string;
@@ -73,7 +74,7 @@ export default function HabitTrackerDateRow(props: HabitTrackerDateRowProps) {
         {props.dateString}
       </td>
       {props.habitDefinitions.map((definition, i) => (
-        <td key={definition.habitId}>
+        <td className={styles.trackerTableCell} key={definition.habitId}>
           <div
             className={classnames(
               styles.trackerCellContainer,
@@ -99,6 +100,11 @@ export default function HabitTrackerDateRow(props: HabitTrackerDateRowProps) {
               )}
             ></div>
           </div>
+          {definition.habitId === props.selectedHabitId && props.isLastRow && (
+            <div className={styles.descriptionContainer}>
+              <HabitDescriptionBox habitDefinition={definition} />
+            </div>
+          )}
         </td>
       ))}
     </tr>
