@@ -7,6 +7,7 @@ import {
 import { collection, getDocs } from "firebase/firestore";
 import { HabitTrackerDate, TaskData } from "@/interfaces/Interfaces";
 import { USER_ID_REMOVE_THIS, firestore_db } from "./firebase";
+import { habitDefinitionsCollection } from "./habit-definitions-service";
 
 const habitTrackerCollection = collection(
   firestore_db,
@@ -50,6 +51,24 @@ const updateTrackerInDatabase = async (
   }
 };
 
+const updateHabitDefinitionInDatabase = async (
+  habitId: string,
+  key: string,
+  value: any
+) => {
+  try {
+    await setDoc(
+      doc(habitDefinitionsCollection, habitId),
+      {
+        [key]: value,
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Error editing document: ", e);
+  }
+};
+
 const updateTrackerValuesInDatabase = async (
   date: string,
   new_tracker_values: { [key: string]: string }
@@ -73,4 +92,5 @@ export {
   documentToHabitTrackerDate,
   updateTrackerInDatabase,
   updateTrackerValuesInDatabase,
+  updateHabitDefinitionInDatabase,
 };

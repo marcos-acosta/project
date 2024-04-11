@@ -21,6 +21,7 @@ import useKeyboardControl, {
 import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
 import {
+  updateHabitDefinitionInDatabase,
   updateTrackerInDatabase,
   updateTrackerValuesInDatabase,
 } from "@/firebase/habit-tracker-service";
@@ -67,8 +68,14 @@ export default function HabitTracker(props: HabitTrackerProps) {
     habitDefinitions,
     selectedHabitId
   );
+  const selectedHabit =
+    selectedHabitIndex != null
+      ? props.habitDefinitions[selectedHabitIndex]
+      : null;
   const hasHabitSelected =
-    selectedHabitId != null && selectedHabitIndex != null;
+    selectedHabitId != null &&
+    selectedHabitIndex != null &&
+    selectedHabit != null;
 
   const toggleInputMode = () => {
     if (!isInInputMode) {
@@ -92,21 +99,12 @@ export default function HabitTracker(props: HabitTrackerProps) {
       direction === LeftRightDirection.LEFT
         ? habitDefinitions.slice(0, selectedHabitIndex).reverse()
         : habitDefinitions.slice(selectedHabitIndex + 1);
-    console.log(habitsToSearch);
     const nextHabit = habitsToSearch.find((definition) =>
       habitScheduleIncludesDateIso(definition.habitSchedule, selectedDate)
     );
     if (nextHabit) {
       setSelectedHabitId(nextHabit.habitId);
     }
-  };
-
-  const updateTracker = (trackerValue: TrackerValue, selectedDate: string) => {
-    if (!hasHabitSelected) {
-      return;
-    }
-    updateTrackerInDatabase(selectedDateIso, selectedHabitId, trackerValue);
-    scrollHabits(LeftRightDirection.RIGHT, selectedDate);
   };
 
   const updateTrackerWithNotApplicableValues = (
@@ -127,6 +125,34 @@ export default function HabitTracker(props: HabitTrackerProps) {
     newTracker[selectedHabitId] = trackerValue;
     updateTrackerValuesInDatabase(selectedDateIso, newTracker);
     scrollHabits(LeftRightDirection.RIGHT, selectedDate);
+  };
+
+  const swapHabitsOrder = (swapDirection: LeftRightDirection) => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    if (
+      (swapDirection === LeftRightDirection.LEFT && selectedHabitIndex === 0) ||
+      (swapDirection === LeftRightDirection.RIGHT &&
+        selectedHabitIndex === props.habitDefinitions.length - 1)
+    ) {
+      return;
+    }
+    const swappedHabit =
+      props.habitDefinitions[
+        selectedHabitIndex +
+          (swapDirection === LeftRightDirection.LEFT ? -1 : 1)
+      ];
+    updateHabitDefinitionInDatabase(
+      selectedHabitId,
+      "order_value",
+      swappedHabit.orderValue
+    );
+    updateHabitDefinitionInDatabase(
+      swappedHabit.habitId,
+      "order_value",
+      selectedHabit.orderValue
+    );
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -210,6 +236,16 @@ export default function HabitTracker(props: HabitTrackerProps) {
       keyboardEvent: { key: "W" },
       callback: () => setSelectedDate(addDays(selectedDate, -7)),
       allowWhen: !isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "H" },
+      callback: () => swapHabitsOrder(LeftRightDirection.LEFT),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "L" },
+      callback: () => swapHabitsOrder(LeftRightDirection.RIGHT),
+      allowWhen: isInInputMode,
     },
   ];
 
