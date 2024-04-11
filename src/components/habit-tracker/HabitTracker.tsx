@@ -20,8 +20,10 @@ import useKeyboardControl, {
 } from "react-keyboard-control";
 import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
-import { updateTrackerInDatabase } from "@/firebase/habit-tracker-service";
-import HabitDescriptionBox from "./HabitDescriptionBox";
+import {
+  updateTrackerInDatabase,
+  updateTrackerValuesInDatabase,
+} from "@/firebase/habit-tracker-service";
 
 interface HabitTrackerProps {
   viewKeyhooks: KeyboardHook[];
@@ -30,8 +32,15 @@ interface HabitTrackerProps {
   habitDefinitions: HabitDefinition[];
 }
 
-const selectFirstHabitIfPossible = (habits: HabitDefinition[]) =>
-  habits.length > 0 ? habits[0].habitId : null;
+const selectFirstHabitIfPossible = (
+  habits: HabitDefinition[],
+  selectedDateIso: string
+) => {
+  const habitId = habits.find((habit) =>
+    habitScheduleIncludesDateIso(habit.habitSchedule, selectedDateIso)
+  )?.habitId;
+  return habitId ? habitId : null;
+};
 
 const getHabitIndexIfPossible = (
   habits: HabitDefinition[],
@@ -63,7 +72,9 @@ export default function HabitTracker(props: HabitTrackerProps) {
 
   const toggleInputMode = () => {
     if (!isInInputMode) {
-      setSelectedHabitId(selectFirstHabitIfPossible(habitDefinitions));
+      setSelectedHabitId(
+        selectFirstHabitIfPossible(habitDefinitions, selectedDateIso)
+      );
     } else {
       setSelectedHabitId(null);
     }
@@ -98,6 +109,26 @@ export default function HabitTracker(props: HabitTrackerProps) {
     scrollHabits(LeftRightDirection.RIGHT, selectedDate);
   };
 
+  const updateTrackerWithNotApplicableValues = (
+    trackerValue: TrackerValue,
+    selectedDate: string
+  ) => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    let newTracker = {} as { [key: string]: string };
+    habitDefinitions.forEach((definition) => {
+      if (
+        !habitScheduleIncludesDateIso(definition.habitSchedule, selectedDate)
+      ) {
+        newTracker[definition.habitId] = TrackerValue.NOT_APPLICABLE;
+      }
+    });
+    newTracker[selectedHabitId] = trackerValue;
+    updateTrackerValuesInDatabase(selectedDateIso, newTracker);
+    scrollHabits(LeftRightDirection.RIGHT, selectedDate);
+  };
+
   const keyboardHooks: KeyboardHook[] = [
     ...props.viewKeyhooks,
     {
@@ -128,23 +159,41 @@ export default function HabitTracker(props: HabitTrackerProps) {
     },
     {
       keyboardEvent: { key: "y" },
-      callback: () => updateTracker(TrackerValue.YES, selectedDateIso),
+      callback: () =>
+        updateTrackerWithNotApplicableValues(TrackerValue.YES, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "n" },
-      callback: () => updateTracker(TrackerValue.NO, selectedDateIso),
+      callback: () =>
+        updateTrackerWithNotApplicableValues(TrackerValue.NO, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "k" },
-      callback: () => updateTracker(TrackerValue.KINDA, selectedDateIso),
+      callback: () =>
+        updateTrackerWithNotApplicableValues(
+          TrackerValue.KINDA,
+          selectedDateIso
+        ),
       allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "?" },
       callback: () =>
-        updateTracker(TrackerValue.NOT_APPLICABLE, selectedDateIso),
+        updateTrackerWithNotApplicableValues(
+          TrackerValue.NOT_APPLICABLE,
+          selectedDateIso
+        ),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "x" },
+      callback: () =>
+        updateTrackerWithNotApplicableValues(
+          TrackerValue.UNKNOWN,
+          selectedDateIso
+        ),
       allowWhen: isInInputMode,
     },
     {

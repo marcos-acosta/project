@@ -1,7 +1,15 @@
-import { classnames, habitScheduleIncludesDateIso } from "@/util";
+import {
+  classnames,
+  habitScheduleIncludesDateIso,
+  trackerValueIsNoKindaYes,
+} from "@/util";
 import React from "react";
 import styles from "./HabitTrackerDateRow.module.css";
-import { HabitDefinition, HabitTrackerDate } from "@/interfaces/Interfaces";
+import {
+  HabitDefinition,
+  HabitTrackerDate,
+  TrackerValue,
+} from "@/interfaces/Interfaces";
 import HabitDescriptionBox from "./HabitDescriptionBox";
 
 export interface HabitTrackerDateRowProps {
@@ -25,16 +33,31 @@ const getColorFromTrackerValue = (
   trackerDate: HabitTrackerDate | undefined,
   habitDefinition: HabitDefinition,
   dateIso: string
-) =>
-  !habitScheduleIncludesDateIso(habitDefinition.habitSchedule, dateIso)
-    ? styles.ignored
-    : trackerDate &&
-      Object.hasOwn(
-        TRACKER_VALUE_TO_CLASSNAME,
-        trackerDate.habitLog[habitDefinition.habitId]
-      )
-    ? TRACKER_VALUE_TO_CLASSNAME[trackerDate.habitLog[habitDefinition.habitId]]
-    : styles.tbd;
+) => {
+  const hasValue =
+    trackerDate &&
+    Object.hasOwn(
+      TRACKER_VALUE_TO_CLASSNAME,
+      trackerDate.habitLog[habitDefinition.habitId]
+    );
+  const inSchedule = habitScheduleIncludesDateIso(
+    habitDefinition.habitSchedule,
+    dateIso
+  );
+  if (
+    hasValue &&
+    (inSchedule ||
+      trackerValueIsNoKindaYes(trackerDate.habitLog[habitDefinition.habitId]))
+  ) {
+    return TRACKER_VALUE_TO_CLASSNAME[
+      trackerDate.habitLog[habitDefinition.habitId]
+    ];
+  } else if (!inSchedule) {
+    return styles.ignored;
+  } else {
+    return styles.tbd;
+  }
+};
 
 const getBorderStyles = (
   isSelectedByRow: boolean,

@@ -50,9 +50,27 @@ const updateTrackerInDatabase = async (
   }
 };
 
+const updateTrackerValuesInDatabase = async (
+  date: string,
+  new_tracker_values: { [key: string]: string }
+) => {
+  try {
+    await setDoc(
+      doc(habitTrackerCollection, date),
+      {
+        habit_log: new_tracker_values,
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Error editing document: ", e);
+  }
+};
+
 export {
   habitTrackerCollection,
   getAllHabitTrackerDates,
   documentToHabitTrackerDate,
   updateTrackerInDatabase,
+  updateTrackerValuesInDatabase,
 };

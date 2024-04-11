@@ -134,9 +134,14 @@ const stringToTrackerValue = (v: string) => {
 const DAYS_OF_WEEK = "umtwrfs";
 
 const habitScheduleIncludesDateIso = (schedule: string, dateIso: string) => {
-  const dayOfWeek = DAYS_OF_WEEK[new Date(dateIso).getDay()];
+  const dayOfWeek = DAYS_OF_WEEK[new Date(dateIso).getUTCDay()];
   return schedule.includes(dayOfWeek);
 };
+
+const trackerValueIsNoKindaYes = (value: string) =>
+  value === TrackerValue.NO ||
+  value === TrackerValue.KINDA ||
+  value === TrackerValue.YES;
 
 export {
   mod,
@@ -156,4 +161,5 @@ export {
   stringToTrackerValue,
   habitScheduleIncludesDateIso,
   getNDaysUpToSelectedDate,
+  trackerValueIsNoKindaYes,
 };
