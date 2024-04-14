@@ -10,7 +10,6 @@ import {
   classnames,
   formatDateToIso,
   formatDateToLocaleDate,
-  getDateRange,
   getNDaysUpToSelectedDate,
   habitScheduleIncludesDateIso,
   toggleScheduleDay,
@@ -24,10 +23,10 @@ import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
 import {
   HABIT_DESCRIPTION,
+  HABIT_NAME,
   HABIT_SCHEDULE,
   ORDER_VALUE,
   updateHabitDefinitionInDatabase,
-  updateTrackerInDatabase,
   updateTrackerValuesInDatabase,
 } from "@/firebase/habit-tracker-service";
 
@@ -65,6 +64,8 @@ export default function HabitTracker(props: HabitTrackerProps) {
   const [isInInputMode, setIsInInputMode] = useState(false);
   const [tempDescriptionText, setTempDescriptionText] = useState("");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [tempHabitName, setTempHabitName] = useState("");
+  const [isEditingHabitName, setIsEditingHabitName] = useState(false);
 
   const habitDefinitions = props.habitDefinitions.sort(
     (a, b) => a.orderValue - b.orderValue
@@ -181,9 +182,19 @@ export default function HabitTracker(props: HabitTrackerProps) {
     setTempDescriptionText(selectedHabit.habitDescription);
   };
 
+  const beginEditingHabitName = () => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    setIsEditingHabitName(true);
+    setTempHabitName(selectedHabit.habitName);
+  };
+
   const cancelEditOrCreate = () => {
     setIsEditingDescription(false);
     setTempDescriptionText("");
+    setIsEditingHabitName(false);
+    setTempHabitName("");
   };
 
   const finishEditing = () => {
@@ -197,6 +208,13 @@ export default function HabitTracker(props: HabitTrackerProps) {
         tempDescriptionText
       );
       cancelEditOrCreate();
+    } else if (isEditingHabitName && tempHabitName.length > 0) {
+      updateHabitDefinitionInDatabase(
+        selectedHabitId,
+        HABIT_NAME,
+        tempHabitName
+      );
+      cancelEditOrCreate();
     }
   };
 
@@ -208,9 +226,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
     {
       keyboardEvent: { key: "j" },
       callback: () => setSelectedDate(addDays(selectedDate, 1)),
-      allowWhen:
-        !isInInputMode &&
-        formatDateToIso(selectedDate) !== formatDateToIso(new Date()),
+      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "k" },
@@ -347,15 +363,21 @@ export default function HabitTracker(props: HabitTrackerProps) {
       preventDefault: true,
     },
     {
+      keyboardEvent: [{ key: "e" }, { key: "h" }],
+      callback: beginEditingHabitName,
+      allowWhen: isInInputMode,
+      preventDefault: true,
+    },
+    {
       keyboardEvent: { key: "Escape" },
       callback: cancelEditOrCreate,
-      allowWhen: isEditingDescription,
+      allowWhen: isEditingDescription || isEditingHabitName,
       allowOnTextInput: true,
     },
     {
       keyboardEvent: { key: "Enter", metaKey: true },
       callback: finishEditing,
-      allowWhen: isEditingDescription,
+      allowWhen: isEditingDescription || isEditingHabitName,
       allowOnTextInput: true,
     },
   ];
@@ -365,6 +387,8 @@ export default function HabitTracker(props: HabitTrackerProps) {
   useEffect(() => {
     props.setCurrentSequence(currentSequence);
   }, [props.setCurrentSequence, currentSequence]);
+
+  const HABIT_NAME_PLACEHOLDER_TEXT = "???";
 
   return (
     <div className={styles.habitTrackerContainer}>
@@ -387,9 +411,25 @@ export default function HabitTracker(props: HabitTrackerProps) {
                         styles.grayedOut
                     )}
                   >
-                    <div className={styles.habitNameText}>
-                      {definition.habitName}
-                    </div>
+                    {isEditingHabitName &&
+                    definition.habitId === selectedHabitId ? (
+                      <input
+                        className={styles.habitNameInput}
+                        size={
+                          tempHabitName.length
+                            ? Math.max(tempHabitName.length, 1)
+                            : HABIT_NAME_PLACEHOLDER_TEXT.length
+                        }
+                        placeholder={HABIT_NAME_PLACEHOLDER_TEXT}
+                        value={tempHabitName}
+                        onChange={(e) => setTempHabitName(e.target.value)}
+                        autoFocus
+                      />
+                    ) : (
+                      <div className={styles.habitNameText}>
+                        {definition.habitName}
+                      </div>
+                    )}
                   </div>
                 </td>
               ))}

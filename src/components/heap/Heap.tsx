@@ -335,7 +335,7 @@ export default function Heap(props: HeapProps) {
       callback: () => props.setShowDetails(!props.showDetails),
     },
     {
-      keyboardEvent: [{ key: "e" }, { key: "n" }],
+      keyboardEvent: [{ key: "e" }, { key: "d" }],
       callback: beginEditingNotes,
       allowWhen: !isEditingNotes && hasTaskSelected,
       preventDefault: true,

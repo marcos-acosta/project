@@ -22,6 +22,11 @@
   padding-top: 1vw;
 }
 
+.habitNameInput {
+  writing-mode: sideways-rl;
+  display: inline-block;
+}
+
 .habitName.grayedOut {
   color: #cccccc;
 }
