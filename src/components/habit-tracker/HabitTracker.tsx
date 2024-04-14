@@ -1,4 +1,5 @@
 import {
+  DaysOfWeek,
   HabitDefinition,
   HabitTrackerDate,
   LeftRightDirection,
@@ -12,6 +13,7 @@ import {
   getDateRange,
   getNDaysUpToSelectedDate,
   habitScheduleIncludesDateIso,
+  toggleScheduleDay,
 } from "@/util";
 import React, { useEffect, useState } from "react";
 import useKeyboardControl, {
@@ -21,6 +23,8 @@ import useKeyboardControl, {
 import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
 import {
+  HABIT_SCHEDULE,
+  ORDER_VALUE,
   updateHabitDefinitionInDatabase,
   updateTrackerInDatabase,
   updateTrackerValuesInDatabase,
@@ -145,18 +149,32 @@ export default function HabitTracker(props: HabitTrackerProps) {
       ];
     updateHabitDefinitionInDatabase(
       selectedHabitId,
-      "order_value",
+      ORDER_VALUE,
       swappedHabit.orderValue
     );
     updateHabitDefinitionInDatabase(
       swappedHabit.habitId,
-      "order_value",
+      ORDER_VALUE,
       selectedHabit.orderValue
     );
   };
 
+  const updateHabitSchedule = (day: DaysOfWeek) => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    updateHabitDefinitionInDatabase(
+      selectedHabitId,
+      HABIT_SCHEDULE,
+      toggleScheduleDay(selectedHabit.habitSchedule, day)
+    );
+  };
+
   const keyboardHooks: KeyboardHook[] = [
-    ...props.viewKeyhooks,
+    ...props.viewKeyhooks.map((keyhook) => ({
+      ...keyhook,
+      allowWhen: !isInInputMode,
+    })),
     {
       keyboardEvent: { key: "j" },
       callback: () => setSelectedDate(addDays(selectedDate, 1)),
@@ -238,6 +256,16 @@ export default function HabitTracker(props: HabitTrackerProps) {
       allowWhen: !isInInputMode,
     },
     {
+      keyboardEvent: { key: "m" },
+      callback: () => setSelectedDate(addDays(selectedDate, 28)),
+      allowWhen: !isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "M" },
+      callback: () => setSelectedDate(addDays(selectedDate, -28)),
+      allowWhen: !isInInputMode,
+    },
+    {
       keyboardEvent: { key: "H" },
       callback: () => swapHabitsOrder(LeftRightDirection.LEFT),
       allowWhen: isInInputMode,
@@ -245,6 +273,41 @@ export default function HabitTracker(props: HabitTrackerProps) {
     {
       keyboardEvent: { key: "L" },
       callback: () => swapHabitsOrder(LeftRightDirection.RIGHT),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "u" },
+      callback: () => updateHabitSchedule(DaysOfWeek.SUNDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "m" },
+      callback: () => updateHabitSchedule(DaysOfWeek.MONDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "t" },
+      callback: () => updateHabitSchedule(DaysOfWeek.TUESDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "w" },
+      callback: () => updateHabitSchedule(DaysOfWeek.WEDNESDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "r" },
+      callback: () => updateHabitSchedule(DaysOfWeek.THURSDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "f" },
+      callback: () => updateHabitSchedule(DaysOfWeek.FRIDAY),
+      allowWhen: isInInputMode,
+    },
+    {
+      keyboardEvent: { key: "s" },
+      callback: () => updateHabitSchedule(DaysOfWeek.SATURDAY),
       allowWhen: isInInputMode,
     },
   ];

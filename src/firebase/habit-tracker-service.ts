@@ -9,6 +9,9 @@ import { HabitTrackerDate, TaskData } from "@/interfaces/Interfaces";
 import { USER_ID_REMOVE_THIS, firestore_db } from "./firebase";
 import { habitDefinitionsCollection } from "./habit-definitions-service";
 
+const HABIT_SCHEDULE = "habit_schedule";
+const ORDER_VALUE = "order_value";
+
 const habitTrackerCollection = collection(
   firestore_db,
   "user_data",
@@ -71,13 +74,13 @@ const updateHabitDefinitionInDatabase = async (
 
 const updateTrackerValuesInDatabase = async (
   date: string,
-  new_tracker_values: { [key: string]: string }
+  newTrackerValues: { [key: string]: string }
 ) => {
   try {
     await setDoc(
       doc(habitTrackerCollection, date),
       {
-        habit_log: new_tracker_values,
+        habit_log: newTrackerValues,
       },
       { merge: true }
     );
@@ -88,6 +91,8 @@ const updateTrackerValuesInDatabase = async (
 
 export {
   habitTrackerCollection,
+  HABIT_SCHEDULE,
+  ORDER_VALUE,
   getAllHabitTrackerDates,
   documentToHabitTrackerDate,
   updateTrackerInDatabase,

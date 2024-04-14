@@ -68,3 +68,13 @@ export enum TrackerValue {
   NOT_APPLICABLE = "N/A",
   UNKNOWN = "?",
 }
+
+export enum DaysOfWeek {
+  SUNDAY = "u",
+  MONDAY = "m",
+  TUESDAY = "t",
+  WEDNESDAY = "w",
+  THURSDAY = "r",
+  FRIDAY = "f",
+  SATURDAY = "s",
+}

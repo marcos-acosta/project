@@ -143,6 +143,17 @@ const trackerValueIsNoKindaYes = (value: string) =>
   value === TrackerValue.KINDA ||
   value === TrackerValue.YES;
 
+const toggleScheduleDay = (schedule: string, day: string) => {
+  const dayIndex = DAYS_OF_WEEK.indexOf(day);
+  if (dayIndex === -1) {
+    return schedule;
+  }
+  const prefix = schedule.slice(0, dayIndex);
+  const suffix = schedule.slice(dayIndex + 1);
+  const newDay = schedule[dayIndex] === "." ? DAYS_OF_WEEK[dayIndex] : ".";
+  return prefix + newDay + suffix;
+};
+
 export {
   mod,
   classnames,
@@ -162,4 +173,5 @@ export {
   habitScheduleIncludesDateIso,
   getNDaysUpToSelectedDate,
   trackerValueIsNoKindaYes,
+  toggleScheduleDay,
 };
