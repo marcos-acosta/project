@@ -1,6 +1,15 @@
-import { QueryDocumentSnapshot, doc, setDoc } from "firebase/firestore";
+import {
+  QueryDocumentSnapshot,
+  deleteDoc,
+  doc,
+  setDoc,
+} from "firebase/firestore";
 import { collection, getDocs } from "firebase/firestore";
-import { HabitTrackerDate, TaskData } from "@/interfaces/Interfaces";
+import {
+  HabitDefinition,
+  HabitTrackerDate,
+  TaskData,
+} from "@/interfaces/Interfaces";
 import { USER_ID_REMOVE_THIS, firestore_db } from "./firebase";
 import { habitDefinitionsCollection } from "./habit-definitions-service";
 
@@ -86,6 +95,32 @@ const updateTrackerValuesInDatabase = async (
   }
 };
 
+const habitDefinitionToDatabaseHabitDefinition = (habit: HabitDefinition) => ({
+  habit_name: habit.habitName,
+  habit_description: habit.habitDescription,
+  habit_schedule: habit.habitSchedule,
+  order_value: habit.orderValue,
+});
+
+const addHabitToDatabase = async (newHabit: HabitDefinition) => {
+  try {
+    await setDoc(
+      doc(habitDefinitionsCollection, newHabit.habitId),
+      habitDefinitionToDatabaseHabitDefinition(newHabit)
+    );
+  } catch (e) {
+    console.error("Error adding document: ", e);
+  }
+};
+
+const deleteHabitFromDatabase = async (habitId: string) => {
+  try {
+    await deleteDoc(doc(habitDefinitionsCollection, habitId));
+  } catch (e) {
+    console.log("Error deleting document: ", e);
+  }
+};
+
 export {
   habitTrackerCollection,
   HABIT_SCHEDULE,
@@ -97,4 +132,6 @@ export {
   updateTrackerInDatabase,
   updateTrackerValuesInDatabase,
   updateHabitDefinitionInDatabase,
+  addHabitToDatabase,
+  deleteHabitFromDatabase,
 };

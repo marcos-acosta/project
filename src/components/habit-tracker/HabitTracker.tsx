@@ -11,10 +11,12 @@ import {
   formatDateToIso,
   formatDateToLocaleDate,
   getNDaysUpToSelectedDate,
+  getNowInSeconds,
   habitScheduleIncludesDateIso,
   toggleScheduleDay,
 } from "@/util";
 import React, { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import useKeyboardControl, {
   KeyboardHook,
   TypedKey,
@@ -26,6 +28,8 @@ import {
   HABIT_NAME,
   HABIT_SCHEDULE,
   ORDER_VALUE,
+  addHabitToDatabase,
+  deleteHabitFromDatabase,
   updateHabitDefinitionInDatabase,
   updateTrackerValuesInDatabase,
 } from "@/firebase/habit-tracker-service";
@@ -66,8 +70,14 @@ export default function HabitTracker(props: HabitTrackerProps) {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [tempHabitName, setTempHabitName] = useState("");
   const [isEditingHabitName, setIsEditingHabitName] = useState(false);
+  const [temporaryHabit, setTemporaryHabit] = useState(
+    null as HabitDefinition | null
+  );
 
-  const habitDefinitions = props.habitDefinitions.sort(
+  const habitDefinitionsWithoutTempHabit = temporaryHabit
+    ? [temporaryHabit, ...props.habitDefinitions]
+    : props.habitDefinitions;
+  const habitDefinitions = habitDefinitionsWithoutTempHabit.sort(
     (a, b) => a.orderValue - b.orderValue
   );
   const selectedDateIso = formatDateToIso(selectedDate);
@@ -191,6 +201,9 @@ export default function HabitTracker(props: HabitTrackerProps) {
   };
 
   const cancelEditOrCreate = () => {
+    if (temporaryHabit) {
+      setTemporaryHabit(null);
+    }
     setIsEditingDescription(false);
     setTempDescriptionText("");
     setIsEditingHabitName(false);
@@ -198,6 +211,16 @@ export default function HabitTracker(props: HabitTrackerProps) {
   };
 
   const finishEditing = () => {
+    if (temporaryHabit) {
+      const newHabitDefinition: HabitDefinition = {
+        ...temporaryHabit,
+        habitName: tempHabitName,
+      };
+      setTemporaryHabit(null);
+      addHabitToDatabase(newHabitDefinition);
+      cancelEditOrCreate();
+      setSelectedHabitId(newHabitDefinition.habitId);
+    }
     if (!hasHabitSelected) {
       return;
     }
@@ -216,6 +239,29 @@ export default function HabitTracker(props: HabitTrackerProps) {
       );
       cancelEditOrCreate();
     }
+  };
+
+  const addHabit = () => {
+    const new_id = uuidv4();
+    setTemporaryHabit({
+      habitName: "",
+      habitDescription: "",
+      orderValue: getNowInSeconds() * 1000,
+      habitId: new_id,
+      habitSchedule: "umtwrfs",
+    });
+    setSelectedHabitId(new_id);
+    setIsEditingHabitName(true);
+    setTempHabitName("");
+    setIsInInputMode(true);
+  };
+
+  const deleteHabit = () => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    deleteHabitFromDatabase(selectedHabitId);
+    setIsInInputMode(false);
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -357,6 +403,12 @@ export default function HabitTracker(props: HabitTrackerProps) {
       allowWhen: isInInputMode,
     },
     {
+      keyboardEvent: { key: "a" },
+      callback: addHabit,
+      allowWhen: !isInInputMode,
+      preventDefault: true,
+    },
+    {
       keyboardEvent: [{ key: "e" }, { key: "d" }],
       callback: beginEditingDescription,
       allowWhen: isInInputMode,
@@ -367,6 +419,11 @@ export default function HabitTracker(props: HabitTrackerProps) {
       callback: beginEditingHabitName,
       allowWhen: isInInputMode,
       preventDefault: true,
+    },
+    {
+      keyboardEvent: [{ key: "d" }, { key: "d" }],
+      callback: deleteHabit,
+      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "Escape" },

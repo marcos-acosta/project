@@ -3,7 +3,6 @@ import {
   MaybeMonthPeriod,
   TaskData,
   UpDownDirection,
-  View,
 } from "@/interfaces/Interfaces";
 import VerticallyCenteredList from "@/components/VerticallyCenteredList";
 import TaskList from "@/components/heap/TaskList";
