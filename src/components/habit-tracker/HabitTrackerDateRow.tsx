@@ -20,6 +20,10 @@ export interface HabitTrackerDateRowProps {
   habitDates: HabitTrackerDate[];
   selectedHabitId: string | null;
   isLastRow: boolean;
+  isEditingDescription: boolean;
+  tempDescriptionText: string;
+  setTempDescriptionText: (t: string) => void;
+  cancel: () => void;
 }
 
 const TRACKER_VALUE_TO_CLASSNAME: { [key: string]: string } = {
@@ -125,7 +129,13 @@ export default function HabitTrackerDateRow(props: HabitTrackerDateRowProps) {
           </div>
           {definition.habitId === props.selectedHabitId && props.isLastRow && (
             <div className={styles.descriptionContainer}>
-              <HabitDescriptionBox habitDefinition={definition} />
+              <HabitDescriptionBox
+                habitDefinition={definition}
+                isInEditMode={props.isEditingDescription}
+                tempDescriptionText={props.tempDescriptionText}
+                setTempDescriptionText={props.setTempDescriptionText}
+                cancel={props.cancel}
+              />
             </div>
           )}
         </td>

@@ -23,6 +23,7 @@ import useKeyboardControl, {
 import styles from "./HabitTracker.module.css";
 import HabitTrackerDateRow from "./HabitTrackerDateRow";
 import {
+  HABIT_DESCRIPTION,
   HABIT_SCHEDULE,
   ORDER_VALUE,
   updateHabitDefinitionInDatabase,
@@ -62,6 +63,8 @@ export default function HabitTracker(props: HabitTrackerProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedHabitId, setSelectedHabitId] = useState(null as string | null);
   const [isInInputMode, setIsInInputMode] = useState(false);
+  const [tempDescriptionText, setTempDescriptionText] = useState("");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   const habitDefinitions = props.habitDefinitions.sort(
     (a, b) => a.orderValue - b.orderValue
@@ -168,6 +171,33 @@ export default function HabitTracker(props: HabitTrackerProps) {
       HABIT_SCHEDULE,
       toggleScheduleDay(selectedHabit.habitSchedule, day)
     );
+  };
+
+  const beginEditingDescription = () => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    setIsEditingDescription(true);
+    setTempDescriptionText(selectedHabit.habitDescription);
+  };
+
+  const cancelEditOrCreate = () => {
+    setIsEditingDescription(false);
+    setTempDescriptionText("");
+  };
+
+  const finishEditing = () => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    if (isEditingDescription) {
+      updateHabitDefinitionInDatabase(
+        selectedHabitId,
+        HABIT_DESCRIPTION,
+        tempDescriptionText
+      );
+      cancelEditOrCreate();
+    }
   };
 
   const keyboardHooks: KeyboardHook[] = [
@@ -310,6 +340,24 @@ export default function HabitTracker(props: HabitTrackerProps) {
       callback: () => updateHabitSchedule(DaysOfWeek.SATURDAY),
       allowWhen: isInInputMode,
     },
+    {
+      keyboardEvent: [{ key: "e" }, { key: "d" }],
+      callback: beginEditingDescription,
+      allowWhen: isInInputMode,
+      preventDefault: true,
+    },
+    {
+      keyboardEvent: { key: "Escape" },
+      callback: cancelEditOrCreate,
+      allowWhen: isEditingDescription,
+      allowOnTextInput: true,
+    },
+    {
+      keyboardEvent: { key: "Enter", metaKey: true },
+      callback: finishEditing,
+      allowWhen: isEditingDescription,
+      allowOnTextInput: true,
+    },
   ];
 
   const currentSequence = useKeyboardControl(keyboardHooks);
@@ -358,6 +406,10 @@ export default function HabitTracker(props: HabitTrackerProps) {
                 selectedHabitId={selectedHabitId}
                 key={formatDateToIso(date)}
                 isLastRow={i === dateRange.length - 1}
+                isEditingDescription={isEditingDescription}
+                tempDescriptionText={tempDescriptionText}
+                setTempDescriptionText={setTempDescriptionText}
+                cancel={cancelEditOrCreate}
               />
             ))}
           </tbody>

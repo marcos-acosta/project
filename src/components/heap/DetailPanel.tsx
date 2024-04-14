@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./DetailPanel.module.css";
 import { EpochSeconds } from "@/interfaces/Interfaces";
-import { classnames, formatMillisToLocaleDate } from "@/util";
+import { classnames, formatMillisToLocaleDate, moveCaratToEnd } from "@/util";
 import ReactTextareaAutosize from "react-textarea-autosize";
 
 interface DetailPanelProps {
@@ -13,12 +13,6 @@ interface DetailPanelProps {
   isEditingNotes: boolean;
   cancel: () => void;
 }
-
-const moveCaratToEnd = (e: React.FocusEvent<HTMLTextAreaElement, Element>) =>
-  e.currentTarget.setSelectionRange(
-    e.currentTarget.value.length,
-    e.currentTarget.value.length
-  );
 
 export default function DetailPanel(props: DetailPanelProps) {
   return (

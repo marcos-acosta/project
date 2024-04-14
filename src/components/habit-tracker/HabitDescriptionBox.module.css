@@ -17,3 +17,15 @@
   margin-top: 1.25vw;
   display: inline-block;
 }
+
+.descriptionTextArea {
+  width: 100%;
+  resize: none;
+  background-color: #ffe599ff;
+  border-radius: 0.2vw;
+  outline: 0.5vw solid #ffe599ff;
+}
+
+.habitDescription {
+  white-space: pre-line;
+}

@@ -154,6 +154,12 @@ const toggleScheduleDay = (schedule: string, day: string) => {
   return prefix + newDay + suffix;
 };
 
+const moveCaratToEnd = (e: React.FocusEvent<HTMLTextAreaElement, Element>) =>
+  e.currentTarget.setSelectionRange(
+    e.currentTarget.value.length,
+    e.currentTarget.value.length
+  );
+
 export {
   mod,
   classnames,
@@ -174,4 +180,5 @@ export {
   getNDaysUpToSelectedDate,
   trackerValueIsNoKindaYes,
   toggleScheduleDay,
+  moveCaratToEnd,
 };

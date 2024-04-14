@@ -1,9 +1,4 @@
-import {
-  QueryDocumentSnapshot,
-  doc,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { QueryDocumentSnapshot, doc, setDoc } from "firebase/firestore";
 import { collection, getDocs } from "firebase/firestore";
 import { HabitTrackerDate, TaskData } from "@/interfaces/Interfaces";
 import { USER_ID_REMOVE_THIS, firestore_db } from "./firebase";
@@ -11,6 +6,8 @@ import { habitDefinitionsCollection } from "./habit-definitions-service";
 
 const HABIT_SCHEDULE = "habit_schedule";
 const ORDER_VALUE = "order_value";
+const HABIT_DESCRIPTION = "habit_description";
+const HABIT_NAME = "habit_name";
 
 const habitTrackerCollection = collection(
   firestore_db,
@@ -93,6 +90,8 @@ export {
   habitTrackerCollection,
   HABIT_SCHEDULE,
   ORDER_VALUE,
+  HABIT_DESCRIPTION,
+  HABIT_NAME,
   getAllHabitTrackerDates,
   documentToHabitTrackerDate,
   updateTrackerInDatabase,
