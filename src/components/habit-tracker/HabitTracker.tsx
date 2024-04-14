@@ -232,19 +232,19 @@ export default function HabitTracker(props: HabitTrackerProps) {
       allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "y" },
+      keyboardEvent: { key: "+" },
       callback: () =>
         updateTrackerWithNotApplicableValues(TrackerValue.YES, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "n" },
+      keyboardEvent: { key: "-" },
       callback: () =>
         updateTrackerWithNotApplicableValues(TrackerValue.NO, selectedDateIso),
       allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "k" },
+      keyboardEvent: { key: "=" },
       callback: () =>
         updateTrackerWithNotApplicableValues(
           TrackerValue.KINDA,
@@ -253,7 +253,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
       allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "?" },
+      keyboardEvent: { key: "_" },
       callback: () =>
         updateTrackerWithNotApplicableValues(
           TrackerValue.NOT_APPLICABLE,
@@ -262,7 +262,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
       allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "x" },
+      keyboardEvent: { key: "?" },
       callback: () =>
         updateTrackerWithNotApplicableValues(
           TrackerValue.UNKNOWN,

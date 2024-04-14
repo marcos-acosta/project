@@ -12,8 +12,6 @@ interface HabitDescriptionBoxProps {
   cancel: () => void;
 }
 
-const PLACEHOLDER_TEXT = "habit description";
-
 export default function HabitDescriptionBox(props: HabitDescriptionBoxProps) {
   return (
     <div className={styles.habitDefinitionBoxContainer}>
@@ -24,12 +22,17 @@ export default function HabitDescriptionBox(props: HabitDescriptionBoxProps) {
           onChange={(e) => props.setTempDescriptionText(e.target.value)}
           onFocus={moveCaratToEnd}
           onBlur={props.cancel}
-          placeholder={PLACEHOLDER_TEXT}
           autoFocus
         />
       ) : (
         <div className={styles.habitDescription}>
-          {props.habitDefinition.habitDescription}
+          {props.habitDefinition.habitDescription.length > 0 ? (
+            props.habitDefinition.habitDescription
+          ) : (
+            <span className={styles.noHabitDescription}>
+              (no habit description)
+            </span>
+          )}
         </div>
       )}
       <div className={styles.habitSchedule}>

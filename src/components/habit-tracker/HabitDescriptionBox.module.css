@@ -2,9 +2,8 @@
   background-color: #f6f6f6ff;
   border-radius: 0.75vw;
   padding: 1vw;
-  font-size: 1.5vw;
+  font-size: 1.4vw;
   position: absolute;
-  font-style: italic;
   width: 20vw;
 }
 
@@ -28,4 +27,9 @@
 
 .habitDescription {
   white-space: pre-line;
+}
+
+.noHabitDescription {
+  font-style: italic;
+  color: #999999;
 }
