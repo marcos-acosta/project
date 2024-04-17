@@ -111,7 +111,7 @@ const getDateRange = (selectedDate: Date, maxNumDays: number) => {
 };
 
 const getNDaysUpToSelectedDate = (selectedDate: Date, numDays: number) => {
-  return arrayRange(-numDays + 1, 0, 1).map((offset) =>
+  return arrayRange(-numDays + 2, 1, 1).map((offset) =>
     addDays(selectedDate, offset)
   );
 };

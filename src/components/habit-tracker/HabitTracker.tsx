@@ -41,15 +41,8 @@ interface HabitTrackerProps {
   habitDefinitions: HabitDefinition[];
 }
 
-const selectFirstHabitIfPossible = (
-  habits: HabitDefinition[],
-  selectedDateIso: string
-) => {
-  const habitId = habits.find((habit) =>
-    habitScheduleIncludesDateIso(habit.habitSchedule, selectedDateIso)
-  )?.habitId;
-  return habitId ? habitId : null;
-};
+const selectFirstHabitIdIfPossible = (habits: HabitDefinition[]) =>
+  habits.length === 0 ? null : habits[0].habitId;
 
 const getHabitIndexIfPossible = (
   habits: HabitDefinition[],
@@ -64,8 +57,6 @@ const getHabitIndexIfPossible = (
 
 export default function HabitTracker(props: HabitTrackerProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedHabitId, setSelectedHabitId] = useState(null as string | null);
-  const [isInInputMode, setIsInInputMode] = useState(false);
   const [tempDescriptionText, setTempDescriptionText] = useState("");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [tempHabitName, setTempHabitName] = useState("");
@@ -81,7 +72,12 @@ export default function HabitTracker(props: HabitTrackerProps) {
     (a, b) => a.orderValue - b.orderValue
   );
   const selectedDateIso = formatDateToIso(selectedDate);
-  const dateRange = getNDaysUpToSelectedDate(selectedDate, 7);
+  const dateRange = getNDaysUpToSelectedDate(selectedDate, 8);
+
+  const [selectedHabitId, setSelectedHabitId] = useState(
+    selectFirstHabitIdIfPossible(habitDefinitions)
+  );
+
   const selectedHabitIndex = getHabitIndexIfPossible(
     habitDefinitions,
     selectedHabitId
@@ -95,20 +91,10 @@ export default function HabitTracker(props: HabitTrackerProps) {
     selectedHabitIndex != null &&
     selectedHabit != null;
 
-  const toggleInputMode = () => {
-    if (!isInInputMode) {
-      setSelectedHabitId(
-        selectFirstHabitIfPossible(habitDefinitions, selectedDateIso)
-      );
-    } else {
-      setSelectedHabitId(null);
-    }
-    setIsInInputMode(!isInInputMode);
-  };
-
   const scrollHabits = (
     direction: LeftRightDirection,
-    selectedDate: string
+    selectedDate: string,
+    obeySchedule: boolean
   ) => {
     if (!hasHabitSelected) {
       return;
@@ -117,8 +103,10 @@ export default function HabitTracker(props: HabitTrackerProps) {
       direction === LeftRightDirection.LEFT
         ? habitDefinitions.slice(0, selectedHabitIndex).reverse()
         : habitDefinitions.slice(selectedHabitIndex + 1);
-    const nextHabit = habitsToSearch.find((definition) =>
-      habitScheduleIncludesDateIso(definition.habitSchedule, selectedDate)
+    const nextHabit = habitsToSearch.find(
+      (definition) =>
+        !obeySchedule ||
+        habitScheduleIncludesDateIso(definition.habitSchedule, selectedDate)
     );
     if (nextHabit) {
       setSelectedHabitId(nextHabit.habitId);
@@ -142,7 +130,7 @@ export default function HabitTracker(props: HabitTrackerProps) {
     });
     newTracker[selectedHabitId] = trackerValue;
     updateTrackerValuesInDatabase(selectedDateIso, newTracker);
-    scrollHabits(LeftRightDirection.RIGHT, selectedDate);
+    scrollHabits(LeftRightDirection.RIGHT, selectedDate, true);
   };
 
   const swapHabitsOrder = (swapDirection: LeftRightDirection) => {
@@ -241,19 +229,48 @@ export default function HabitTracker(props: HabitTrackerProps) {
     }
   };
 
+  const getNextOrderValue = () => {
+    if (
+      !hasHabitSelected ||
+      selectedHabitIndex === habitDefinitions.length - 1
+    ) {
+      return getNowInSeconds() * 1000;
+    } else {
+      return (
+        (habitDefinitions[selectedHabitIndex].orderValue +
+          habitDefinitions[selectedHabitIndex + 1].orderValue) /
+        2
+      );
+    }
+  };
+
   const addHabit = () => {
     const new_id = uuidv4();
     setTemporaryHabit({
       habitName: "",
       habitDescription: "",
-      orderValue: getNowInSeconds() * 1000,
+      orderValue: getNextOrderValue(),
       habitId: new_id,
       habitSchedule: "umtwrfs",
     });
     setSelectedHabitId(new_id);
     setIsEditingHabitName(true);
     setTempHabitName("");
-    setIsInInputMode(true);
+  };
+
+  const navigateAfterDeletingHabit = () => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    if (habitDefinitions.length === 1) {
+      setSelectedHabitId(null);
+    } else {
+      if (selectedHabitIndex === 0) {
+        scrollHabits(LeftRightDirection.RIGHT, selectedDateIso, false);
+      } else {
+        scrollHabits(LeftRightDirection.LEFT, selectedDateIso, false);
+      }
+    }
   };
 
   const deleteHabit = () => {
@@ -261,49 +278,48 @@ export default function HabitTracker(props: HabitTrackerProps) {
       return;
     }
     deleteHabitFromDatabase(selectedHabitId);
-    setIsInInputMode(false);
+    navigateAfterDeletingHabit();
   };
 
   const keyboardHooks: KeyboardHook[] = [
-    ...props.viewKeyhooks.map((keyhook) => ({
-      ...keyhook,
-      allowWhen: !isInInputMode,
-    })),
+    ...props.viewKeyhooks,
     {
       keyboardEvent: { key: "j" },
       callback: () => setSelectedDate(addDays(selectedDate, 1)),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "k" },
       callback: () => setSelectedDate(addDays(selectedDate, -1)),
-      allowWhen: !isInInputMode,
-    },
-    {
-      keyboardEvent: { key: "Enter" },
-      callback: toggleInputMode,
     },
     {
       keyboardEvent: { key: "h" },
-      callback: () => scrollHabits(LeftRightDirection.LEFT, selectedDateIso),
-      allowWhen: isInInputMode,
+      callback: () =>
+        scrollHabits(LeftRightDirection.LEFT, selectedDateIso, false),
     },
     {
       keyboardEvent: { key: "l" },
-      callback: () => scrollHabits(LeftRightDirection.RIGHT, selectedDateIso),
-      allowWhen: isInInputMode,
+      callback: () =>
+        scrollHabits(LeftRightDirection.RIGHT, selectedDateIso, false),
+    },
+    {
+      keyboardEvent: { key: "<" },
+      callback: () =>
+        scrollHabits(LeftRightDirection.LEFT, selectedDateIso, true),
+    },
+    {
+      keyboardEvent: { key: ">" },
+      callback: () =>
+        scrollHabits(LeftRightDirection.RIGHT, selectedDateIso, true),
     },
     {
       keyboardEvent: { key: "+" },
       callback: () =>
         updateTrackerWithNotApplicableValues(TrackerValue.YES, selectedDateIso),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "-" },
       callback: () =>
         updateTrackerWithNotApplicableValues(TrackerValue.NO, selectedDateIso),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "=" },
@@ -312,7 +328,6 @@ export default function HabitTracker(props: HabitTrackerProps) {
           TrackerValue.KINDA,
           selectedDateIso
         ),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "_" },
@@ -321,7 +336,6 @@ export default function HabitTracker(props: HabitTrackerProps) {
           TrackerValue.NOT_APPLICABLE,
           selectedDateIso
         ),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "?" },
@@ -330,100 +344,81 @@ export default function HabitTracker(props: HabitTrackerProps) {
           TrackerValue.UNKNOWN,
           selectedDateIso
         ),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "." },
       callback: () => setSelectedDate(new Date()),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "w" },
       callback: () => setSelectedDate(addDays(selectedDate, 7)),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "W" },
       callback: () => setSelectedDate(addDays(selectedDate, -7)),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "m" },
       callback: () => setSelectedDate(addDays(selectedDate, 28)),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "M" },
       callback: () => setSelectedDate(addDays(selectedDate, -28)),
-      allowWhen: !isInInputMode,
     },
     {
       keyboardEvent: { key: "H" },
       callback: () => swapHabitsOrder(LeftRightDirection.LEFT),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "L" },
       callback: () => swapHabitsOrder(LeftRightDirection.RIGHT),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "u" },
+      keyboardEvent: [{ key: "s" }, { key: "u" }],
       callback: () => updateHabitSchedule(DaysOfWeek.SUNDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "m" },
+      keyboardEvent: [{ key: "s" }, { key: "m" }],
       callback: () => updateHabitSchedule(DaysOfWeek.MONDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "t" },
+      keyboardEvent: [{ key: "s" }, { key: "t" }],
       callback: () => updateHabitSchedule(DaysOfWeek.TUESDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "w" },
+      keyboardEvent: [{ key: "s" }, { key: "w" }],
       callback: () => updateHabitSchedule(DaysOfWeek.WEDNESDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "r" },
+      keyboardEvent: [{ key: "s" }, { key: "r" }],
       callback: () => updateHabitSchedule(DaysOfWeek.THURSDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "f" },
+      keyboardEvent: [{ key: "s" }, { key: "f" }],
       callback: () => updateHabitSchedule(DaysOfWeek.FRIDAY),
-      allowWhen: isInInputMode,
     },
     {
-      keyboardEvent: { key: "s" },
+      keyboardEvent: [{ key: "s" }, { key: "s" }],
       callback: () => updateHabitSchedule(DaysOfWeek.SATURDAY),
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "a" },
       callback: addHabit,
-      allowWhen: !isInInputMode,
       preventDefault: true,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "d" }],
       callback: beginEditingDescription,
-      allowWhen: isInInputMode,
       preventDefault: true,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "h" }],
       callback: beginEditingHabitName,
-      allowWhen: isInInputMode,
       preventDefault: true,
     },
     {
       keyboardEvent: [{ key: "d" }, { key: "d" }],
       callback: deleteHabit,
-      allowWhen: isInInputMode,
     },
     {
       keyboardEvent: { key: "Escape" },

@@ -47,11 +47,11 @@ export default function page() {
 
   const viewKeyhooks = [
     {
-      keyboardEvent: [{ key: "h" }, { key: "h" }],
+      keyboardEvent: [{ key: "T" }, { key: "T" }],
       callback: () => setView(View.HEAP_HOME),
     },
     {
-      keyboardEvent: [{ key: "t" }, { key: "t" }],
+      keyboardEvent: [{ key: "H" }, { key: "H" }],
       callback: () => setView(View.HABIT_TRACKER),
     },
   ];
