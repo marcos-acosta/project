@@ -34,7 +34,7 @@ const sortUncompletedTasks = (a: TaskData, b: TaskData) =>
 
 const sortCompletedTasks = (a: TaskData, b: TaskData) =>
   a.completionTime && b.completionTime
-    ? a.completionTime - b.completionTime
+    ? b.completionTime - a.completionTime
     : 0;
 
 const sortTasks = (a: TaskData, b: TaskData) =>
@@ -77,7 +77,7 @@ export default function Heap(props: HeapProps) {
   const tasks = temporaryTask ? [temporaryTask, ...sortedTasks] : sortedTasks;
 
   const [selectedId, setSelectedId] = useState(
-    selectFirstTaskIfPossible(tasks)
+    selectFirstTaskIfPossible(sortedTasks)
   );
 
   const selectedIndex = getTaskIndexIfPossible(tasks, selectedId);
@@ -224,7 +224,7 @@ export default function Heap(props: HeapProps) {
   const cancelEditOrCreate = () => {
     if (temporaryTask) {
       setTemporaryTask(null);
-      setSelectedId(selectFirstTaskIfPossible(tasks));
+      setSelectedId(selectFirstTaskIfPossible(sortedTasks));
     }
     setInEditMode(false);
     setCurrentText("");
@@ -295,12 +295,12 @@ export default function Heap(props: HeapProps) {
     {
       keyboardEvent: { key: "J" },
       callback: () => swapTask(UpDownDirection.DOWN),
-      allowWhen: hasTaskSelected,
+      allowWhen: hasTaskSelected && !props.monthPeriod,
     },
     {
       keyboardEvent: { key: "K" },
       callback: () => swapTask(UpDownDirection.UP),
-      allowWhen: hasTaskSelected,
+      allowWhen: hasTaskSelected && !props.monthPeriod,
     },
     {
       keyboardEvent: [{ key: "e" }, { key: "t" }],
@@ -318,6 +318,7 @@ export default function Heap(props: HeapProps) {
       keyboardEvent: { key: "a" },
       callback: addTask,
       preventDefault: true,
+      allowWhen: !props.monthPeriod,
     },
     {
       keyboardEvent: { key: "Escape" },
@@ -395,7 +396,7 @@ export default function Heap(props: HeapProps) {
           <>
             {props.monthPeriod && (
               <div className={styles.monthDisplay}>
-                {formatMonthYear(props.monthPeriod)}
+                {formatMonthYear(props.monthPeriod)} ({tasks.length})
               </div>
             )}
             <TaskList
