@@ -113,6 +113,17 @@ export default function HabitTracker(props: HabitTrackerProps) {
     }
   };
 
+  const jumpToSide = (direction: LeftRightDirection) => {
+    if (!hasHabitSelected) {
+      return;
+    }
+    if (direction === LeftRightDirection.LEFT) {
+      setSelectedHabitId(habitDefinitions[0].habitId);
+    } else {
+      setSelectedHabitId(habitDefinitions[habitDefinitions.length - 1].habitId);
+    }
+  };
+
   const updateTrackerWithNotApplicableValues = (
     trackerValue: TrackerValue,
     selectedDate: string
@@ -310,6 +321,14 @@ export default function HabitTracker(props: HabitTrackerProps) {
       keyboardEvent: { key: ">" },
       callback: () =>
         scrollHabits(LeftRightDirection.RIGHT, selectedDateIso, true),
+    },
+    {
+      keyboardEvent: { key: "[" },
+      callback: () => jumpToSide(LeftRightDirection.LEFT),
+    },
+    {
+      keyboardEvent: { key: "]" },
+      callback: () => jumpToSide(LeftRightDirection.RIGHT),
     },
     {
       keyboardEvent: { key: "+" },
